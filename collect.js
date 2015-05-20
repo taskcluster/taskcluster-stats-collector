@@ -16,12 +16,14 @@ var main = async function () {
 	  filename: 'collect'
 	});
 	var influx = new base.stats.Influx({
-		connectionString: cfg.get('influxdb:connectionString')
+		connectionString: cfg.get('influxdb:connectionString'),
+		maxDelay:500,
+		maxPendingPoints:257
 	});
 	function statMessage (message) {
 		var runs=message.payload.status.runs;
-		var idx=runs.length-1
-		var run=runs[idx]
+		var idx=runs.length-1;
+		var run=runs[idx];
 		function statRun (run) {
 			var scheduled=(Date.parse(run.scheduled));
 			var started=(Date.parse(run.started));
@@ -68,10 +70,7 @@ var main = async function () {
 	await failedListener.resume();
 	await exceptionListener.resume();
 	debug('Listening begins');
-	setInterval(function () {
-		 influx.flush();
-		 debug('data flushed to DB');
-	},60*1000);
+	
 	// completedListener.close(); how to close everything
 	// failedListener.close();
 	// exceptionListener.close();
