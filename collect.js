@@ -52,8 +52,8 @@ var main = async function () {
 		statRun(run)
 	}
 	var connection=new taskcluster.PulseConnection({
-	    	username: cfg.get('pulse:username'),      // Pulse username from pulse guardian
-	    	password: cfg.get('pulse:password')       // Pulse password from pulse guardian
+	    	username: cfg.get('pulse:username'),
+	    	password: cfg.get('pulse:password')
 		});
 	var completedListener = new taskcluster.PulseListener({connection:connection});
 	var failedListener = new taskcluster.PulseListener({connection:connection});
