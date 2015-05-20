@@ -4,7 +4,6 @@ var assert = require('assert');
 var Promise = require('promise');
 var taskcluster = require('taskcluster-client');
 var base = require('taskcluster-base');
-
 var main = async function () {
 	var cfg = base.config({
 	  defaults: {},
@@ -69,13 +68,14 @@ var main = async function () {
 	await failedListener.resume();
 	await exceptionListener.resume();
 	debug('Listening begins');
-	setTimeout(function () {
+	setInterval(function () {
 		 influx.flush();
-		 completedListener.close();
-		 failedListener.close();
-		 exceptionListener.close();
-		 connection.close();
-		 influx.close()
-	},10000);
+		 debug('data flushed to DB');
+	},60*1000);
+	// completedListener.close(); how to close everything
+	// failedListener.close();
+	// exceptionListener.close();
+	// connection.close();
+	// influx.close()
 }
 main()

@@ -1,3 +1,4 @@
 node_modules/
 create.js
 collect.conf.json
+.env
