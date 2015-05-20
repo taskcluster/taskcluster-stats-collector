@@ -1,1 +1,1 @@
-run:node_modules/babel/bin/babel-node collect.js
+run: node_modules/babel/bin/babel-node collect.js
