@@ -45,7 +45,7 @@ async function test () {
   await queue.reportCompleted(id,0);
   debug('task completed')
   setTimeout(() => {
-    assume(col.influx.pendingPoints()).equal(3);
+    assume(col.influx.pendingPoints()).equal(3); //this test will break if more points are added
     col.close();
   },5000);
 }
