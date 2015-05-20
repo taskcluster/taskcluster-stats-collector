@@ -7,7 +7,7 @@ var taskcluster = require('taskcluster-client');
 var base = require('taskcluster-base');
 var cfg = require('../bin/config.js')
 var taskdefn = {
-  "provisionerId":'no-provisioner',
+  "provisionerId":'stats-provisioner',
   "workerType":'stats-dummy',
   "payload":{"image":'ubuntu:13.10',
       "command": [
@@ -26,7 +26,7 @@ var taskdefn = {
   }
 };
 async function test () {
-  var col = new collector.Collector();
+  var col = new collector.Collector({provisionerId:'stats-provisioner'});
   var id = slugid.v4();
   var queue = new taskcluster.Queue({
     credentials:{
@@ -36,5 +36,17 @@ async function test () {
   });
   var result = await queue.createTask(id,taskdefn);
   assume(result).ok;
+  debug('task created')
+  await queue.claimTask(id, 0, {
+      workerGroup:    'my-worker-group',
+      workerId:       'my-worker'
+    });
+  debug('task claimed')
+  await queue.reportCompleted(id,0);
+  debug('task completed')
+  setTimeout(() => {
+    assume(col.influx.pendingPoints()).equal(3);
+    col.close();
+  },5000);
 }
 test();
