@@ -1,3 +1,3 @@
 node_modules/
-collect.conf.json
+bin/collect.conf.json
 .env
