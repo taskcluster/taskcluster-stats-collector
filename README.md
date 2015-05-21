@@ -12,7 +12,7 @@ var col2 = new collector.Collector({provisionerId:'aws-provisioner-v1'});
 col.close()
 ```
 
-##Series
+##Data Collected
 
 All series are stored per run.
 

@@ -5,7 +5,18 @@ var slugid = require('slugid');
 var Promise = require('promise');
 var taskcluster = require('taskcluster-client');
 var base = require('taskcluster-base');
-var cfg = require('../bin/config.js')
+var cfg = base.config({
+  defaults: {},
+  profile:  {},
+  envs: [
+    'pulse_username',
+    'pulse_password',
+    'influxdb_connectionString',
+    'taskcluster_clientId',
+    'taskcluster_accessToken'
+  ],
+  filename: 'collect'
+});
 var taskdefn = {
   "provisionerId":'stats-provisioner',
   "workerType":'stats-dummy',
@@ -25,14 +36,19 @@ var taskdefn = {
     "source":'https://github.com/taskcluster/taskcluster-stats-collector'
   }
 };
+
 async function test () {
-  var col = new collector.Collector({provisionerId:'stats-provisioner'});
+  var col = new collector.Collector({
+    credentials: cfg.get('pulse'),
+    connectionString: cfg.get('influxdb:connectionString'),
+    routingKey: {
+      provisionerId: 'stats-provisioner'
+    }
+  }
+  );
   var id = slugid.v4();
   var queue = new taskcluster.Queue({
-    credentials:{
-      clientId: cfg.get('taskcluster:clientId'), 
-      accessToken: cfg.get('taskcluster:accessToken')
-    }
+    credentials: cfg.get('taskcluster')
   });
   var result = await queue.createTask(id,taskdefn);
   assume(result).ok;
@@ -49,4 +65,5 @@ async function test () {
     col.close();
   },5000);
 }
+
 test();
