@@ -58,10 +58,17 @@ async function test () {
       workerId:       'my-worker',
     });
   debug('task claimed');
-  await queue.reportCompleted(id, 0);
+  await queue.reportException(id, 0, {reason: 'worker-shutdown'});
+  debug('task exception');
+  await queue.claimTask(id, 1, {
+      workerGroup:    'my-worker-group',
+      workerId:       'my-worker',
+    });
+  debug('task claimed again');
+  await queue.reportCompleted(id, 1);
   debug('task completed');
   setTimeout(() => {
-    assume(col.influx.pendingPoints()).equal(3); //this test will break if more points are added
+    assume(col.influx.pendingPoints()).equal(6); //this test will break if more points are added
     col.close();
   }, 5000);
 }

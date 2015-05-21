@@ -2,7 +2,7 @@
 
 ##Purpose
 
-Reads taskcluster messages off pulse and stores in influxDB relevant statistics for further reading.
+Reads taskcluster messages off pulse and stores in relevant statistics influxDB.
 
 
 ##Data Collected
@@ -44,6 +44,9 @@ First configure the following environment variables:
 pulse_username = // Pulse Guardian username
 pulse_password = // Pulse Guardian password
 influxdb_connectionString = "<protocol>://<user>:<pwd>@<host>:<port>/db/<database>"
+//These Taskcluster credentials must have scopes queue:create-task:stats-provisioner/stats-dummy, queue:claim-task, queue:resolve-task, assume:worker-type:stats-provisioner/stats-dummy, assume:worker-id:my-worker-group/my-worker
+taskcluster_clientId=
+taskcluster_accessToken=
 ```
 
 Then run
