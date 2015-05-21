@@ -1,40 +1,40 @@
-var debug = require('debug')('test:test')
-var assume = require('assume')
+var debug = require('debug')('test:test');
+var assume = require('assume');
 var collector = require('../lib/collector.js');
 var slugid = require('slugid');
-var Promise = require('promise');
 var taskcluster = require('taskcluster-client');
 var base = require('taskcluster-base');
 var cfg = base.config({
   defaults: {},
-  profile:  {},
+  profile: {},
   envs: [
     'pulse_username',
     'pulse_password',
     'influxdb_connectionString',
     'taskcluster_clientId',
-    'taskcluster_accessToken'
+    'taskcluster_accessToken',
   ],
-  filename: 'collect'
+  filename: 'collect',
 });
 var taskdefn = {
-  "provisionerId":'stats-provisioner',
-  "workerType":'stats-dummy',
-  "payload":{"image":'ubuntu:13.10',
-      "command": [
-        "/bin/bash",
-        "-c",
-        "sleep 2"
+  provisionerId: 'stats-provisioner',
+  workerType: 'stats-dummy',
+  payload: { image: 'ubuntu:13.10',
+      command: [
+        '/bin/bash',
+        '-c',
+        'sleep 2',
         ],
-      "maxRunTime": 600},
-  "created":taskcluster.fromNowJSON(),
-  "deadline":taskcluster.fromNowJSON('2 hours'),
-  "metadata":{
-    "name":'Testing!',
-    "description":'testing?',
-    "owner":'eggylv999@gmail.com',
-    "source":'https://github.com/taskcluster/taskcluster-stats-collector'
-  }
+      maxRunTime: 600,
+    },
+  created: taskcluster.fromNowJSON(),
+  deadline: taskcluster.fromNowJSON('2 hours'),
+  metadata: {
+    name: 'Testing!',
+    description: 'testing?',
+    owner: 'eggylv999@gmail.com',
+    source: 'https://github.com/taskcluster/taskcluster-stats-collector',
+  },
 };
 
 async function test () {
@@ -42,28 +42,28 @@ async function test () {
     credentials: cfg.get('pulse'),
     connectionString: cfg.get('influxdb:connectionString'),
     routingKey: {
-      provisionerId: 'stats-provisioner'
-    }
+      provisionerId: 'stats-provisioner',
+    },
   }
   );
   var id = slugid.v4();
   var queue = new taskcluster.Queue({
-    credentials: cfg.get('taskcluster')
+    credentials: cfg.get('taskcluster'),
   });
-  var result = await queue.createTask(id,taskdefn);
+  var result = await queue.createTask(id, taskdefn);
   assume(result).ok;
-  debug('task created')
+  debug('task created');
   await queue.claimTask(id, 0, {
       workerGroup:    'my-worker-group',
-      workerId:       'my-worker'
+      workerId:       'my-worker',
     });
-  debug('task claimed')
-  await queue.reportCompleted(id,0);
-  debug('task completed')
+  debug('task claimed');
+  await queue.reportCompleted(id, 0);
+  debug('task completed');
   setTimeout(() => {
     assume(col.influx.pendingPoints()).equal(3); //this test will break if more points are added
     col.close();
-  },5000);
+  }, 5000);
 }
 
 test();
