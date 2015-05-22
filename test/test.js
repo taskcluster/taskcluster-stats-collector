@@ -38,8 +38,9 @@ var taskdefn = {
 };
 
 async function test () {
-  assert(cfg.get('pulse'),'pulse credentials required');
-  assert(cfg.get('influxdb:connectionString'),'connection string required');
+  assert(cfg.get('pulse'), 'pulse credentials required');
+  assert(cfg.get('influxdb:connectionString'), 'connection string required');
+  assert(cfg.get('taskcluster'), 'taskcluster credentials required');
   var col = new collector.Collector({
     credentials: cfg.get('pulse'),
     connectionString: cfg.get('influxdb:connectionString'),
