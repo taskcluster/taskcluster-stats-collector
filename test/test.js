@@ -77,7 +77,7 @@ async function test () {
   }, 5000);
 }
 
-test().then(('pulse connection successful'),function (err) {
+test().then(res => debug('pulse connection successful'),function (err) {
   setTimeout(() => {
     throw err;
   }, 0);
