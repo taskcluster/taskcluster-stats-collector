@@ -73,10 +73,11 @@ async function test () {
   setTimeout(() => {
     assert(col.influx.pendingPoints() == 2 * 3, 'Wrong number of points!'); //this test will break if more points are added
     col.close();
+    debug('message read successful');
   }, 5000);
 }
 
-test().then(null,function (err) {
+test().then(('pulse connection successful'),function (err) {
   setTimeout(() => {
     throw err;
   }, 0);
