@@ -36,7 +36,8 @@
     "no-throw-literal": 2,
     "radix": 2,
     "yoda": [1, "never"],
-    "strict": [2, "global"],
-    "comma-dangle": [2, "always-multiline"]
+    "comma-dangle": [2, "always-multiline"],
+    "strict": [2,"never"],
+    "key-spacing": 0
   }
 }

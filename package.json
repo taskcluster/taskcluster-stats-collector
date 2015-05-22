@@ -16,7 +16,9 @@
   },
   "devDependencies": {
     "mocha":                "^2.2.1",
-    "assume":               "^1.2.4"
+    "assume":               "^1.2.4",
+    "babel-eslint":         "^2.0.2",
+    "eslint":               "^0.17.1"
   },
   "engines": {
     "node":                 "0.12.x",
