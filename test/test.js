@@ -38,6 +38,15 @@ var taskdefn = {
 };
 
 async function test () {
+  console.log('test started');
+  assume(2==2).ok('fail');
+  console.log('test cont');
+  assume(true).is.false('how odd, true is not a false');
+  assume(false).ok('fail');
+  console.log('test started');
+  assume(cfg.get('pulse')).ok();
+  assume(cfg.get('influxdb:connectionString')).ok();
+  console.log('gets here');
   var col = new collector.Collector({
     credentials: cfg.get('pulse'),
     connectionString: cfg.get('influxdb:connectionString'),
@@ -68,9 +77,10 @@ async function test () {
   await queue.reportCompleted(id, 1);
   debug('task completed');
   setTimeout(() => {
-    assume(col.influx.pendingPoints()).equal(6); //this test will break if more points are added
+    assume(col.influx.pendingPoints()).equal(2 * 3); //this test will break if more points are added
     col.close();
   }, 5000);
+  console.log('lkdsajfoew');
 }
 
 test();
