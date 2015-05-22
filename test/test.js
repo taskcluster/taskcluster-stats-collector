@@ -1,5 +1,5 @@
 var debug = require('debug')('test:test');
-var assume = require('assume');
+var assert = require('assert');
 var collector = require('../lib/collector.js');
 var slugid = require('slugid');
 var taskcluster = require('taskcluster-client');
@@ -38,15 +38,8 @@ var taskdefn = {
 };
 
 async function test () {
-  console.log('test started');
-  assume(2==2).ok('fail');
-  console.log('test cont');
-  assume(true).is.false('how odd, true is not a false');
-  assume(false).ok('fail');
-  console.log('test started');
-  assume(cfg.get('pulse')).ok();
-  assume(cfg.get('influxdb:connectionString')).ok();
-  console.log('gets here');
+  assert(cfg.get('pulse'),'pulse credentials required');
+  assert(cfg.get('influxdb:connectionString'),'connection string required');
   var col = new collector.Collector({
     credentials: cfg.get('pulse'),
     connectionString: cfg.get('influxdb:connectionString'),
@@ -60,7 +53,7 @@ async function test () {
     credentials: cfg.get('taskcluster'),
   });
   var result = await queue.createTask(id, taskdefn);
-  assume(result).ok;
+  assert(result);
   debug('task created');
   await queue.claimTask(id, 0, {
       workerGroup:    'my-worker-group',
@@ -77,10 +70,13 @@ async function test () {
   await queue.reportCompleted(id, 1);
   debug('task completed');
   setTimeout(() => {
-    assume(col.influx.pendingPoints()).equal(2 * 3); //this test will break if more points are added
+    assert(col.influx.pendingPoints() == 2 * 3, 'Wrong number of points!'); //this test will break if more points are added
     col.close();
   }, 5000);
-  console.log('lkdsajfoew');
 }
 
-test();
+test().then(null,function (err) {
+  setTimeout(() => {
+    throw err;
+  }, 0);
+});
