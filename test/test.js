@@ -1,12 +1,11 @@
-suite("stats-collection", () => {
-  test("collect stats", async () => {
+suite('stats-collection', () => {
+  test('collect stats', async () => {
     var debug = require('debug')('test:test');
     var assert = require('assert');
     var collector = require('../lib/collector.js');
     var slugid = require('slugid');
     var taskcluster = require('taskcluster-client');
     var base = require('taskcluster-base');
-    var Promise = require('promise');
 
     var cfg = base.config({
       defaults: {},
@@ -72,15 +71,14 @@ suite("stats-collection", () => {
     debug('task claimed again');
 
     await queue.reportCompleted(id, 1);
-    debug('task completed');    
+    debug('task completed');
 
     base.testing.poll(async () => {
       //this test will break if more points are added
-      assert(col.influx.pendingPoints() == 2 * 3, 'Wrong number of points!');
-    }, 20, 1000).then(res => {
+      assert(col.influx.pendingPoints() === 2 * 3, 'Wrong number of points!');
+    }, 20, 1000).then(() => {
       col.close();
       debug('message read successful');
-    }, err => {throw err;});
+    }, err => {throw err; });
   });
 });
-
