@@ -2,7 +2,7 @@
 
 ##Purpose
 
-Reads taskcluster messages off pulse and stores in relevant statistics influxDB.
+Reads taskcluster messages off pulse and stores relevant statistics into influxDB.
 
 
 ##Data Collected
