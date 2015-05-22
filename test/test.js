@@ -74,15 +74,13 @@ suite("stats-collection", () => {
     await queue.reportCompleted(id, 1);
     debug('task completed');    
 
-    var promise = new Promise((resolve, reject) => {
-      setTimeout(() => {
-        assert(col.influx.pendingPoints() == 2 * 3, 'Wrong number of points!'); //this test will break if more points are added
-        col.close();
-        debug('message read successful');
-        resolve();
-      }, 5000); 
-    });
-    await promise;
+    base.testing.poll(async () => {
+      //this test will break if more points are added
+      assert(col.influx.pendingPoints() == 2 * 3, 'Wrong number of points!');
+    }, 20, 1000).then(res => {
+      col.close();
+      debug('message read successful');
+    }, err => {throw err;});
   });
 });
 
