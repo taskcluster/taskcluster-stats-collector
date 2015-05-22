@@ -1,5 +1,5 @@
 {
-  "name": "create-task-test",
+  "name": "taskcluster-stats-collector",
   "version": "1.0.0",
   "private": true,
   "scripts": {
