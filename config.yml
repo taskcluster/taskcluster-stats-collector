@@ -1,0 +1,18 @@
+defaults:
+  app:
+    queueName:  null
+  pulse:
+    username: !env PULSE_USERNAME
+    password: !env PULSE_PASSWORD
+  stathat:
+    ezKey: !env STATHAT_KEY
+production:
+  app:
+    queueName: incoming-stats
+test:
+  app:
+    queueName: null
+  taskcluster:
+    credentials:
+      clientId:     !env TASKCLUSTER_CLIENT_ID
+      accessToken:  !env TASKCLUSTER_ACCESS_TOKEN

@@ -1,26 +1,15 @@
-var base = require('taskcluster-base');
 var collector = require('../lib/collector.js');
+var config    = require('typed-env-config');
 
-var cfg = base.config({
-  defaults: {},
-  profile: {},
-  envs: [
-    'pulse_username',
-    'pulse_password',
-    'listener_queueName',
-    'influxdb_connectionString',
-    'taskcluster_clientId',
-    'taskcluster_accessToken',
-  ],
-  filename: '../collect',
-});
+let cfg = config();
 
 collector({ //class from lib/collector.js
-    // String with required information to connect to influxDB
-    connectionString: cfg.get('influxdb:connectionString'),
+    statehatEZKey: cfg.stathat.ezKey,
     // Name of durable queue on pulse, so we can have
     // multiple instances of the collector
-    queueName: cfg.get('listener:queueName'),
-    credentials: cfg.get('pulse'),
+    queueName: cfg.app.queueName,
+    credentials: cfg.pulse,
     routingKey: {}, // different in tests
+}).catch(err => {
+  console.log(err.stack);
 });

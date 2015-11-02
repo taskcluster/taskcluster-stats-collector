@@ -1,3 +1,4 @@
 node_modules/
 collect.conf.json
 .env
+user-config.yml
