@@ -4,7 +4,10 @@ var config    = require('typed-env-config');
 let cfg = config();
 
 collector({ //class from lib/collector.js
-    statehatEZKey: cfg.stathat.ezKey,
+    statsum: {
+      secret: cfg.statsum.secret,
+      project: cfg.statsum.project,
+    },
     // Name of durable queue on pulse, so we can have
     // multiple instances of the collector
     queueName: cfg.app.queueName,

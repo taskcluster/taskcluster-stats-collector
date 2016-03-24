@@ -4,8 +4,9 @@ defaults:
   pulse:
     username: !env PULSE_USERNAME
     password: !env PULSE_PASSWORD
-  stathat:
-    ezKey: !env STATHAT_KEY
+  statsum:
+    project: !env STATSUM_PROJECT
+    secret: !env STATSUM_SECRET
 production:
   app:
     queueName: incoming-stats
