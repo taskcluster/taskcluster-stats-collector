@@ -28,9 +28,9 @@ suite('stats-collection', () => {
     assert(cfg.taskcluster, 'taskcluster credentials required');
 
     let monitor = await monitoring({
-     project: 'tc-stats-collector',
-     credentials: {clientId: 'fake', accessToken: 'alsofake'},
-     mock: true,
+      project: 'tc-stats-collector',
+      credentials: {clientId: 'fake', accessToken: 'alsofake'},
+      mock: true,
     });
 
     let col = await collector({
@@ -51,18 +51,18 @@ suite('stats-collection', () => {
     debug('task created');
 
     await queue.claimTask(id, 0, {
-        workerGroup:    'my-worker-group',
-        workerId:       'my-worker',
-      });
+      workerGroup:    'my-worker-group',
+      workerId:       'my-worker',
+    });
     debug('task claimed');
 
     await queue.reportException(id, 0, {reason: 'worker-shutdown'});
     debug('task exception');
 
     await queue.claimTask(id, 1, {
-        workerGroup:    'my-worker-group',
-        workerId:       'my-worker',
-      });
+      workerGroup:    'my-worker-group',
+      workerId:       'my-worker',
+    });
     debug('task claimed again');
 
     await queue.reportCompleted(id, 1);
