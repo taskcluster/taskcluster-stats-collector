@@ -1,6 +1,6 @@
 defaults:
   app:
-    queueName: null
+    queueName: !env QUEUE_NAME
   pulse:
     username: !env PULSE_USERNAME
     password: !env PULSE_PASSWORD
@@ -8,6 +8,3 @@ defaults:
     credentials:
       clientId:     !env TASKCLUSTER_CLIENT_ID
       accessToken:  !env TASKCLUSTER_ACCESS_TOKEN
-production:
-  app:
-    queueName: incoming-stats
