@@ -10,7 +10,7 @@ let load = base.loader({
 
   monitor: {
     requires: ['cfg'],
-    setup: cfg => monitoring({
+    setup: ({cfg}) => monitoring({
       project: 'tc-stats-collector',
       credentials: cfg.taskcluster.credentials,
     }),
