@@ -4,7 +4,6 @@ defaults:
   pulse:
     username: !env PULSE_USERNAME
     password: !env PULSE_PASSWORD
-test:
   taskcluster:
     credentials:
       clientId:     !env TASKCLUSTER_CLIENT_ID
