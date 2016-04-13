@@ -6,19 +6,9 @@ suite('stats-collection', () => {
     var slugid = require('slugid');
     var taskcluster = require('taskcluster-client');
     var base = require('taskcluster-base');
+    var monitoring = require('taskcluster-lib-monitor');
 
-    var cfg = base.config({
-      defaults: {},
-      profile: {},
-      envs: [
-        'pulse_username',
-        'pulse_password',
-        'influxdb_connectionString',
-        'taskcluster_clientId',
-        'taskcluster_accessToken',
-      ],
-      filename: 'collect',
-    });
+    let cfg = base.config({profile: 'test'});
 
     var taskdefn = {
       provisionerId: 'stats-provisioner',
@@ -34,21 +24,26 @@ suite('stats-collection', () => {
       },
     };
 
-    assert(cfg.get('pulse'), 'pulse credentials required');
-    assert(cfg.get('influxdb:connectionString'), 'connection string required');
-    assert(cfg.get('taskcluster'), 'taskcluster credentials required');
+    assert(cfg.pulse, 'pulse credentials required');
+    assert(cfg.taskcluster, 'taskcluster credentials required');
+
+    let monitor = await monitoring({
+      project: 'tc-stats-collector',
+      credentials: {clientId: 'fake', accessToken: 'alsofake'},
+      mock: true,
+    });
 
     let col = await collector({
-      credentials: cfg.get('pulse'),
-      connectionString: cfg.get('influxdb:connectionString'),
+      credentials: cfg.pulse,
       queueName: undefined,
       routingKey: {
         provisionerId: 'stats-provisioner',
       },
+      monitor,
     });
     var id = slugid.v4();
     var queue = new taskcluster.Queue({
-      credentials: cfg.get('taskcluster'),
+      credentials: cfg.taskcluster.credentials,
     });
 
     let result = await queue.createTask(id, taskdefn);
@@ -56,29 +51,30 @@ suite('stats-collection', () => {
     debug('task created');
 
     await queue.claimTask(id, 0, {
-        workerGroup:    'my-worker-group',
-        workerId:       'my-worker',
-      });
+      workerGroup:    'my-worker-group',
+      workerId:       'my-worker',
+    });
     debug('task claimed');
 
     await queue.reportException(id, 0, {reason: 'worker-shutdown'});
     debug('task exception');
 
     await queue.claimTask(id, 1, {
-        workerGroup:    'my-worker-group',
-        workerId:       'my-worker',
-      });
+      workerGroup:    'my-worker-group',
+      workerId:       'my-worker',
+    });
     debug('task claimed again');
 
     await queue.reportCompleted(id, 1);
     debug('task completed');
 
-    base.testing.poll(async () => {
-      //this test will break if more points are added
-      assert(col.influx.pendingPoints() === 2 * 3, 'Wrong number of points!');
-    }, 20, 1000).then(() => {
-      col.close();
-      debug('message read successful');
-    }, err => {throw err; });
+    await col.close();
+
+    assert.deepEqual(monitor.counts, {
+      'tasks.stats-dummy.resolved.worker-shutdown': 1,
+      'tasks.stats-dummy.resolved.completed': 1,
+    });
+    assert(monitor.measures['tasks.stats-dummy.running']);
+    assert.equal(monitor.measures['tasks.stats-dummy.running'].length, 2);
   });
 });
