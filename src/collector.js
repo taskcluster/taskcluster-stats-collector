@@ -57,7 +57,7 @@ class Collector {
     let key = `${taskId}/${runId}`;
     debug('handle pending task %s', key);
 
-    if (Object.keys(this.waitingTasks).includes(key)) {
+    if (_.includes(Object.keys(this.waitingTasks).includes, key)) {
       return;
     }
 
@@ -75,7 +75,7 @@ class Collector {
     let key = `${taskId}/${runId}`;
     debug('handle running task %s', key);
 
-    if (!Object.keys(this.waitingTasks).includes(key)) {
+    if (!_.includes(Object.keys(this.waitingTasks).includes, key)) {
       this.waitingTasks[key] = {
         dims: {
           workerType: payload.status.workerType,
