@@ -1,4 +1,4 @@
-var collector  = require('../lib/collector.js');
+var collector  = require('./collector.js');
 var monitoring = require('taskcluster-lib-monitor');
 let base = require('taskcluster-base');
 
