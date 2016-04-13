@@ -1,19 +1,13 @@
 defaults:
   app:
-    queueName:  null
+    queueName: null
   pulse:
     username: !env PULSE_USERNAME
     password: !env PULSE_PASSWORD
-  statsum:
-    project: !env STATSUM_PROJECT
-    secret: !env STATSUM_SECRET
-production:
-  app:
-    queueName: incoming-stats
-test:
-  app:
-    queueName: null
   taskcluster:
     credentials:
       clientId:     !env TASKCLUSTER_CLIENT_ID
       accessToken:  !env TASKCLUSTER_ACCESS_TOKEN
+production:
+  app:
+    queueName: incoming-stats

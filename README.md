@@ -23,7 +23,6 @@ var collector = require('./lib/collector.js');
 //We can also have it listen to messages with only certain routing keys
 //check taskcluster-client for more info on how to do this
 var col = collector({
-  connectionString: // InfluxDB connection string, look down for details
   credentials: {
     username: // Pulse Guardian username
     password: // Pulse Guardian password
@@ -38,18 +37,7 @@ col.close()
 
 ##Testing
 
-First configure the following environment variables:
-
-```
-pulse_username = // Pulse Guardian username
-pulse_password = // Pulse Guardian password
-influxdb_connectionString = "<protocol>://<user>:<pwd>@<host>:<port>/db/<database>"
-//These Taskcluster credentials must have scopes queue:create-task:stats-provisioner/stats-dummy, queue:claim-task, queue:resolve-task, assume:worker-type:stats-provisioner/stats-dummy, assume:worker-id:my-worker-group/my-worker
-taskcluster_clientId=
-taskcluster_accessToken=
-```
-
-Then run
+First setup your `user-config.yml` based on `user-config-example.yml`. Then run
 
 ```
 npm test
