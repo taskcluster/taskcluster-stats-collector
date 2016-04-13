@@ -25,7 +25,7 @@
     "slugid": "1.0.3",
     "taskcluster-base": "^0.12.2",
     "taskcluster-client": "^0.23.16",
-    "taskcluster-lib-monitor": "^0.1.0",
+    "taskcluster-lib-monitor": "^0.2.0",
     "tc-rules": "^3.0.1"
   },
   "engines": {
