@@ -2182,18 +2182,6 @@
       "from": "ms@0.7.1",
       "resolved": "https://registry.npmjs.org/ms/-/ms-0.7.1.tgz"
     },
-    "msgpack": {
-      "version": "1.0.2",
-      "from": "msgpack@>=1.0.2 <2.0.0",
-      "resolved": "https://registry.npmjs.org/msgpack/-/msgpack-1.0.2.tgz",
-      "dependencies": {
-        "nan": {
-          "version": "2.2.1",
-          "from": "nan@>=2.0.9 <3.0.0",
-          "resolved": "https://registry.npmjs.org/nan/-/nan-2.2.1.tgz"
-        }
-      }
-    },
     "mute-stream": {
       "version": "0.0.5",
       "from": "mute-stream@0.0.5",
@@ -4114,9 +4102,8 @@
       "resolved": "https://registry.npmjs.org/stack-trace/-/stack-trace-0.0.7.tgz"
     },
     "statsum": {
-      "version": "0.4.0",
-      "from": "statsum@>=0.4.0 <0.5.0",
-      "resolved": "https://registry.npmjs.org/statsum/-/statsum-0.4.0.tgz",
+      "version": "0.4.1",
+      "from": "statsum@0.4.1",
       "dependencies": {
         "lodash": {
           "version": "4.11.0",
@@ -5068,8 +5055,8 @@
       }
     },
     "taskcluster-lib-monitor": {
-      "version": "0.1.0",
-      "from": "taskcluster-lib-monitor@>=0.1.0 <0.2.0",
+      "version": "0.2.0",
+      "from": "taskcluster-lib-monitor@>=0.2.0 <0.3.0",
       "dependencies": {
         "lodash": {
           "version": "4.11.0",
