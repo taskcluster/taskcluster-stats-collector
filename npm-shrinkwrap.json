@@ -1319,9 +1319,9 @@
           "resolved": "https://registry.npmjs.org/globals/-/globals-9.4.0.tgz"
         },
         "lodash": {
-          "version": "4.11.0",
+          "version": "4.11.1",
           "from": "lodash@>=4.0.0 <5.0.0",
-          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.0.tgz"
+          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.1.tgz"
         },
         "user-home": {
           "version": "2.0.0",
@@ -1658,9 +1658,9 @@
       "resolved": "https://registry.npmjs.org/inquirer/-/inquirer-0.12.0.tgz",
       "dependencies": {
         "lodash": {
-          "version": "4.11.0",
+          "version": "4.11.1",
           "from": "lodash@>=4.3.0 <5.0.0",
-          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.0.tgz"
+          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.1.tgz"
         }
       }
     },
@@ -4102,13 +4102,13 @@
       "resolved": "https://registry.npmjs.org/stack-trace/-/stack-trace-0.0.7.tgz"
     },
     "statsum": {
-      "version": "0.4.1",
-      "from": "statsum@0.4.1",
+      "version": "0.4.2",
+      "from": "statsum@>=0.4.1 <0.5.0",
       "dependencies": {
         "lodash": {
-          "version": "4.11.0",
+          "version": "4.11.1",
           "from": "lodash@>=4.5.1 <5.0.0",
-          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.0.tgz"
+          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.1.tgz"
         }
       }
     },
@@ -4222,9 +4222,9 @@
       "resolved": "https://registry.npmjs.org/table/-/table-3.7.8.tgz",
       "dependencies": {
         "lodash": {
-          "version": "4.11.0",
+          "version": "4.11.1",
           "from": "lodash@>=4.0.0 <5.0.0",
-          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.0.tgz"
+          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.1.tgz"
         }
       }
     },
@@ -5055,13 +5055,13 @@
       }
     },
     "taskcluster-lib-monitor": {
-      "version": "0.2.0",
-      "from": "taskcluster-lib-monitor@>=0.2.0 <0.3.0",
+      "version": "0.2.1",
+      "from": "taskcluster-lib-monitor@>=0.2.1 <0.3.0",
       "dependencies": {
         "lodash": {
-          "version": "4.11.0",
+          "version": "4.11.1",
           "from": "lodash@>=4.5.1 <5.0.0",
-          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.0.tgz"
+          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.1.tgz"
         }
       }
     },
@@ -5603,9 +5603,9 @@
       "resolved": "https://registry.npmjs.org/taskcluster-lib-validate/-/taskcluster-lib-validate-0.4.3.tgz",
       "dependencies": {
         "lodash": {
-          "version": "4.11.0",
+          "version": "4.11.1",
           "from": "lodash@>=4.5.1 <5.0.0",
-          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.0.tgz"
+          "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.11.1.tgz"
         }
       }
     },
