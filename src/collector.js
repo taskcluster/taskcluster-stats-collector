@@ -51,11 +51,11 @@ class Collector {
     return collector;
   }
 
-  handleTaskPending (payload) {
+  taskPending (payload) {
     let taskId = payload.status.taskId;
     let runId = payload.runId;
     let key = `${taskId}/${runId}`;
-    debug('handle pending task %s', key);
+    debug('task pending: %s', key);
 
     if (_.includes(Object.keys(this.waitingTasks).includes, key)) {
       return;
@@ -65,26 +65,27 @@ class Collector {
       dims: {
         workerType: payload.status.workerType,
       },
-      pending: new Date(payload.status.runs[runId].scheduled),
+      pendingStarted: new Date(payload.status.runs[runId].scheduled),
     };
   }
 
-  handleTaskRunning (payload) {
+  taskNotPending (payload) {
     let taskId = payload.status.taskId;
     let runId = payload.runId;
     let key = `${taskId}/${runId}`;
-    debug('handle running task %s', key);
+    debug('task no longer pending: %s', key);
 
     if (!_.includes(Object.keys(this.waitingTasks).includes, key)) {
       this.waitingTasks[key] = {
         dims: {
           workerType: payload.status.workerType,
         },
-        pending: new Date(payload.status.runs[runId].scheduled),
+        pendingStarted: new Date(payload.status.runs[runId].scheduled),
       };
     }
 
-    this.waitingTasks[key].started = new Date(payload.status.runs[runId].started);
+    let run = payload.status.runs[runId];
+    this.waitingTasks[key].pendingEnded = new Date(run.started || run.resolved);
   }
 
   async flush () {
@@ -99,10 +100,11 @@ class Collector {
     for (let id in this.waitingTasks) {
       let task = this.waitingTasks[id];
       debug(task);
-      let waitTime = Date.now() - task.pending;
+      let waitTime = Date.now() - task.pendingStarted;
 
-      if (task.started) {
-        waitTime = task.started - task.pending;
+      if (task.pendingEnded) {
+        waitTime = task.pendingEnded - task.pendingStarted;
+        // no need to measure this task again
         delete this.waitingTasks[id];
       }
 
@@ -117,11 +119,12 @@ class Collector {
     let {payload, exchange} = message;
     //debug('received message on exchange: %s, message %j', exchange, payload);
     if (exchange === 'exchange/taskcluster-queue/v1/task-pending') {
-      return this.handleTaskPending(payload);
-    }
-
-    if (exchange === 'exchange/taskcluster-queue/v1/task-running') {
-      return this.handleTaskRunning(payload);
+      return this.taskPending(payload);
+    } else {
+      this.taskNotPending(payload);
+      if (exchange === 'exchange/taskcluster-queue/v1/task-running') {
+        return;
+      }
     }
 
     try {

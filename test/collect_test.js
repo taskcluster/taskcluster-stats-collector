@@ -76,5 +76,9 @@ suite('stats-collection', () => {
     });
     assert(monitor.measures['tasks.stats-dummy.running']);
     assert.equal(monitor.measures['tasks.stats-dummy.running'].length, 2);
+
+    col.flush();
+
+    assert(monitor.measures['tasks.stats-dummy.pending']);
   });
 });
