@@ -26,7 +26,18 @@ class Collector {
     assert(this._options.monitor, 'Need a monitor from taskcluster-lib-monitor!');
     this.monitor = this._options.monitor;
 
+    // tasks that are currently pending, shaped as
+    // {
+    //   dims: {
+    //     workerType: ..,
+    //   },
+    //   pendingStarted: ..,
+    //   pendingEnded: ..,
+    // }
     this.waitingTasks = {};
+
+    // all known workerTypes
+    this.seenWorkerTypes = new Set();
 
     this.connection = new taskcluster.PulseConnection(this._options.credentials);
     this.listener = new taskcluster.PulseListener({
@@ -55,6 +66,8 @@ class Collector {
     let taskId = payload.status.taskId;
     let runId = payload.runId;
     let key = `${taskId}/${runId}`;
+    let workerType = payload.status.workerType;
+
     debug('task pending: %s', key);
 
     if (_.includes(Object.keys(this.waitingTasks).includes, key)) {
@@ -62,26 +75,26 @@ class Collector {
     }
 
     this.waitingTasks[key] = {
-      dims: {
-        workerType: payload.status.workerType,
-      },
+      dims: { workerType },
       pendingStarted: new Date(payload.status.runs[runId].scheduled),
     };
+    this.seenWorkerTypes.add(workerType);
   }
 
   taskNotPending (payload) {
     let taskId = payload.status.taskId;
     let runId = payload.runId;
     let key = `${taskId}/${runId}`;
+    let workerType = payload.status.workerType;
+
     debug('task no longer pending: %s', key);
 
     if (!_.includes(Object.keys(this.waitingTasks).includes, key)) {
       this.waitingTasks[key] = {
-        dims: {
-          workerType: payload.status.workerType,
-        },
+        dims: { workerType },
         pendingStarted: new Date(payload.status.runs[runId].scheduled),
       };
+      this.seenWorkerTypes.add(workerType);
     }
 
     let run = payload.status.runs[runId];
@@ -97,6 +110,8 @@ class Collector {
       return;
     }
 
+    let seenThisFlush = new Set();
+
     for (let id in this.waitingTasks) {
       let task = this.waitingTasks[id];
       debug(task);
@@ -108,8 +123,18 @@ class Collector {
         delete this.waitingTasks[id];
       }
 
+      seenThisFlush.add(task.dims.workerType);
       this.monitor.measure(`tasks.${task.dims.workerType}.pending`, waitTime);
     }
+
+    // measure zero pending for any workerType that has not been measured this
+    // iteration; this provides a data point for every workerType during every
+    // aggregation interval in statsum.
+    this.seenWorkerTypes.forEach(workerType => {
+      if (!seenThisFlush.has(workerType)) {
+        this.monitor.measure(`tasks.${workerType}.pending`, 0);
+      }
+    });
 
     this._flushTimer = setTimeout(() => this.flush(), 30 * 1000);
   }
