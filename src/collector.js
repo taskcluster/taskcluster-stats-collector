@@ -75,7 +75,7 @@ class Collector {
     }
 
     this.waitingTasks[key] = {
-      dims: { workerType },
+      dims: {workerType},
       pendingStarted: new Date(payload.status.runs[runId].scheduled),
     };
     this.seenWorkerTypes.add(workerType);
@@ -91,7 +91,7 @@ class Collector {
 
     if (!_.includes(Object.keys(this.waitingTasks).includes, key)) {
       this.waitingTasks[key] = {
-        dims: { workerType },
+        dims: {workerType},
         pendingStarted: new Date(payload.status.runs[runId].scheduled),
       };
       this.seenWorkerTypes.add(workerType);
