@@ -68,7 +68,7 @@ class Collector {
     let key = `${taskId}/${runId}`;
     let workerType = payload.status.workerType;
 
-    debug('task pending: %s', key);
+    debug('task pending: %s (%s)', key, workerType);
 
     if (_.includes(Object.keys(this.waitingTasks).includes, key)) {
       return;
@@ -87,7 +87,7 @@ class Collector {
     let key = `${taskId}/${runId}`;
     let workerType = payload.status.workerType;
 
-    debug('task no longer pending: %s', key);
+    debug('task no longer pending: %s (%s)', key, workerType);
 
     if (!_.includes(Object.keys(this.waitingTasks).includes, key)) {
       this.waitingTasks[key] = {
@@ -114,7 +114,6 @@ class Collector {
 
     for (let id in this.waitingTasks) {
       let task = this.waitingTasks[id];
-      debug(task);
       let waitTime = Date.now() - task.pendingStarted;
 
       if (task.pendingEnded) {
@@ -124,6 +123,7 @@ class Collector {
       }
 
       seenThisFlush.add(task.dims.workerType);
+      debug('measuring task %s (%s), pending %s seconds', id, task.dims.workerType, waitTime / 1000);
       this.monitor.measure(`tasks.${task.dims.workerType}.pending`, waitTime);
     }
 
@@ -142,7 +142,6 @@ class Collector {
   onMessage (message) {
     let that = this;
     let {payload, exchange} = message;
-    //debug('received message on exchange: %s, message %j', exchange, payload);
     if (exchange === 'exchange/taskcluster-queue/v1/task-pending') {
       return this.taskPending(payload);
     } else {
