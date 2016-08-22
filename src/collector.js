@@ -70,7 +70,7 @@ class Collector {
 
     debug('task pending: %s (%s)', key, workerType);
 
-    if (_.includes(Object.keys(this.waitingTasks).includes, key)) {
+    if (_.includes(Object.keys(this.waitingTasks), key)) {
       return;
     }
 
@@ -89,7 +89,7 @@ class Collector {
 
     debug('task no longer pending: %s (%s)', key, workerType);
 
-    if (!_.includes(Object.keys(this.waitingTasks).includes, key)) {
+    if (!_.includes(Object.keys(this.waitingTasks), key)) {
       this.waitingTasks[key] = {
         dims: {workerType},
         pendingStarted: new Date(payload.status.runs[runId].scheduled),
