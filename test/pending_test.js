@@ -101,4 +101,41 @@ suite('pending', () => {
       });
     });
   });
+
+  suite('check', () => {
+    let check = pending.check;
+    let statuses = {};
+    let fakequeue = {
+      status: (taskId) => {
+        assume(statuses).to.include(taskId);
+        return Promise.resolve(statuses[taskId]);
+      },
+    };
+
+    test('ignores workerTypes with no pending tasks', async () => {
+      let state = {pendingTasks: {wt: {}}};
+      await check(state, fakequeue, now);
+      assume(state).to.deeply.equal({pendingTasks: {wt: {}}});
+    });
+
+    test('ignores workerTypes with recent pending tasks', async () => {
+      let state = {pendingTasks: {wt: {'task1/0': now - 200}}};
+      await check(state, fakequeue, now);
+      assume(state).to.deeply.equal({pendingTasks: {wt: {'task1/0': now - 200}}});
+    });
+
+    test('does nothing for real pending tasks', async () => {
+      let state = {pendingTasks: {wt: {'task1/0': january}}};
+      statuses['task1'] = {status: {runs: [{state: 'pending'}]}};
+      await check(state, fakequeue, now);
+      assume(state).to.deeply.equal({pendingTasks: {wt: {'task1/0': january}}});
+    });
+
+    test('deletes pending tasks that are not really pending', async () => {
+      let state = {pendingTasks: {wt: {'task1/0': january}}};
+      statuses['task1'] = {status: {runs: [{state: 'completed'}]}};
+      await check(state, fakequeue, now);
+      assume(state).to.deeply.equal({pendingTasks: {wt: {}}});
+    });
+  });
 });
