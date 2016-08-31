@@ -28,7 +28,7 @@ let load = base.loader({
     requires: ['listener', 'monitor', 'cfg'],
     setup: async ({listener, monitor, cfg}) => {
       // set up the various collectors
-      require('./running')({monitor, listener, credentials: cfg.taskcluster.credentials});
+      require('./running')({monitor, listener});
       require('./pending')({monitor, listener});
       listener.start();
     },

@@ -1,100 +1,112 @@
 suite('pending', () => {
   let assume = require('assume');
-  let pending = require('../lib/pending');
+  let {PendingCollector} = require('../lib/pending');
+
   let now = new Date(2016, 7, 1).getTime();
   let january = new Date(2016, 0, 1).getTime();
   let february = new Date(2016, 1, 1).getTime();
   let march = new Date(2016, 2, 1).getTime();
 
-  suite('earliest', () => {
-    let earliest = pending.earliest;
+  let monitors;
+  let fakemonitor = {measure: (name, value) => { monitors[name] = value; }};
 
-    test('returns null, now for an empty list', () => {
-      let {taskKey, scheduled} = earliest({pendingTasks: {wt: {}}}, 'wt', now);
+  let statuses = {};
+  let fakequeue = {
+    status: (taskId) => {
+      assume(statuses).to.include(taskId);
+      return Promise.resolve(statuses[taskId]);
+    },
+  };
+
+  let collector;
+
+  before(() => {
+    collector = new PendingCollector({monitor: fakemonitor, listener: undefined});
+    collector.queue = fakequeue;
+  });
+
+  beforeEach(() => {
+    monitors = {};
+    statuses = {};
+    collector.pendingTasks = {};
+    collector.readyWorkerTypes = {};
+  });
+
+  suite('earliest', () => {
+    test('returns null, now for an empty set of tasks', () => {
+      collector.pendingTasks['wt'] = {};
+      let {taskKey, scheduled} = collector.earliest('wt', now);
+      assume(taskKey).equals(null);
+      assume(scheduled).equals(now);
+    });
+
+    test('returns null, now for a missing set of tasks', () => {
+      collector.pendingTasks['wt'] = {};
+      let {taskKey, scheduled} = collector.earliest('wt', now);
       assume(taskKey).equals(null);
       assume(scheduled).equals(now);
     });
 
     test('returns oldest task given a few', () => {
-      let state = {
-        pendingTasks: {
-          wt: {
-            mar: march,
-            feb: february,
-            jan: january,
-          },
+      collector.pendingTasks = {
+        wt: {
+          mar: march,
+          feb: february,
+          jan: january,
         },
       };
 
-      let {taskKey, scheduled} = earliest(state, 'wt', now);
+      let {taskKey, scheduled} = collector.earliest('wt', now);
       assume(taskKey).equals('jan');
       assume(scheduled).equals(january);
     });
   });
 
   suite('update', () => {
-    let update = pending.update;
-
     test('records an initial pending message correctly', () => {
-      let state = {pendingTasks: {}, readyWorkerTypes: {}};
-      update(state, 'wt', 'task1', true, january);
-      assume(state).to.deeply.equal({
-        pendingTasks: {wt: {task1: january}},
-        readyWorkerTypes: {},
-      });
+      collector.update('wt', 'task1', true, january);
+      assume(collector.pendingTasks).to.deeply.equal({wt: {task1: january}});
+      assume(collector.readyWorkerTypes).to.deeply.equal({});
     });
 
     test('records nothing except the workerType for an initial non-pending', () => {
-      let state = {pendingTasks: {}, readyWorkerTypes: {}};
-      update(state, 'wt', 'task1', false, january);
-      assume(state).to.deeply.equal({
-        pendingTasks: {wt: {}},
-        readyWorkerTypes: {},
-      });
+      collector.update('wt', 'task1', false, january);
+      assume(collector.pendingTasks).to.deeply.equal({wt: {}});
+      assume(collector.readyWorkerTypes).to.deeply.equal({});
     });
 
     test('records a ready worker type after seeing both pending and non-pending', () => {
-      let state = {pendingTasks: {}, readyWorkerTypes: {}};
-      update(state, 'wt', 'task1', true, january);
-      update(state, 'wt', 'task1', false, january);
-      assume(state).to.deeply.equal({
-        pendingTasks: {wt: {}},
-        readyWorkerTypes: {wt: true},
-      });
+      collector.update('wt', 'task1', true, january);
+      collector.update('wt', 'task1', false, january);
+      assume(collector.pendingTasks).to.deeply.equal({wt: {}});
+      assume(collector.readyWorkerTypes).to.deeply.equal({wt: true});
     });
   });
 
   suite('flush', () => {
-    let flush = pending.flush;
-    let monitors;
-    let fakemonitor = {measure: (name, value) => { monitors[name] = value; }};
-
-    beforeEach(() => {
-      monitors = {};
-    });
-
     test('does nothing for workerTypes not in readyWorkerTypes', () => {
-      let state = {pendingTasks: {wt: {task1: 1234}}, readyWorkerTypes: {}};
-      flush(state, fakemonitor, now);
+      collector.pendingTasks = {wt: {task1: january}};
+      collector.readyWorkerTypes = {};
+
+      collector.flush(now);
       assume(monitors).to.deeply.equal({});
     });
 
     test('measures to the oldest time for each workerType', () => {
-      let state = {
-        pendingTasks: {
-          wt1: {
-            task1: january,
-            task2: march,
-          },
-          wt2: {
-            task5: february,
-          },
+      collector.pendingTasks = {
+        wt1: {
+          task1: january,
+          task2: march,
         },
-        readyWorkerTypes: {
-          wt1: true,
-          wt2: true,
-        }};
-      flush(state, fakemonitor, now);
+        wt2: {
+          task5: february,
+        },
+      };
+      collector.readyWorkerTypes = {
+        wt1: true,
+        wt2: true,
+      };
+      collector.flush(now);
       assume(monitors).to.deeply.equal({
         'tasks.wt1.pending': now - january,
         'tasks.wt2.pending': now - february,
@@ -103,39 +115,30 @@ suite('pending', () => {
   });
 
   suite('check', () => {
-    let check = pending.check;
-    let statuses = {};
-    let fakequeue = {
-      status: (taskId) => {
-        assume(statuses).to.include(taskId);
-        return Promise.resolve(statuses[taskId]);
-      },
-    };
-
     test('ignores workerTypes with no pending tasks', async () => {
-      let state = {pendingTasks: {wt: {}}};
-      await check(state, fakequeue, now);
-      assume(state).to.deeply.equal({pendingTasks: {wt: {}}});
+      collector.pendingTasks = {wt: {}};
+      await collector.check(now);
+      assume(collector.pendingTasks).to.deeply.equal({wt: {}});
     });
 
     test('ignores workerTypes with recent pending tasks', async () => {
-      let state = {pendingTasks: {wt: {'task1/0': now - 200}}};
-      await check(state, fakequeue, now);
-      assume(state).to.deeply.equal({pendingTasks: {wt: {'task1/0': now - 200}}});
+      collector.pendingTasks = {wt: {'task1/0': now - 200}};
+      await collector.check(now);
+      assume(collector.pendingTasks).to.deeply.equal({wt: {'task1/0': now - 200}});
     });
 
     test('does nothing for real pending tasks', async () => {
-      let state = {pendingTasks: {wt: {'task1/0': january}}};
+      collector.pendingTasks = {wt: {'task1/0': january}};
       statuses['task1'] = {status: {runs: [{state: 'pending'}]}};
-      await check(state, fakequeue, now);
-      assume(state).to.deeply.equal({pendingTasks: {wt: {'task1/0': january}}});
+      await collector.check(now);
+      assume(collector.pendingTasks).to.deeply.equal({wt: {'task1/0': january}});
     });
 
     test('deletes pending tasks that are not really pending', async () => {
-      let state = {pendingTasks: {wt: {'task1/0': january}}};
+      collector.pendingTasks = {wt: {'task1/0': january}};
       statuses['task1'] = {status: {runs: [{state: 'completed'}]}};
-      await check(state, fakequeue, now);
-      assume(state).to.deeply.equal({pendingTasks: {wt: {}}});
+      await collector.check(now);
+      assume(collector.pendingTasks).to.deeply.equal({wt: {}});
     });
   });
 });
