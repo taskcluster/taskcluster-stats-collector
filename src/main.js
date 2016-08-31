@@ -1,4 +1,4 @@
-var collector  = require('./collector.js');
+var TaskListener  = require('./listener.js');
 var monitoring = require('taskcluster-lib-monitor');
 let base = require('taskcluster-base');
 
@@ -16,16 +16,33 @@ let load = base.loader({
     }),
   },
 
-  server: {
+  listener: {
     requires: ['cfg', 'monitor'],
-    setup: async ({cfg, monitor}) => collector({
-      // Name of durable queue on pulse, so we can have
-      // multiple instances of the collector
-      queueName: cfg.app.queueName,
-      monitor,
+    setup: async ({cfg, monitor}) => new TaskListener({
       credentials: cfg.pulse,
       routingKey: {}, // different in tests
     }),
+  },
+
+  server: {
+    requires: ['listener', 'monitor', 'cfg'],
+    setup: async ({listener, monitor, cfg}) => {
+      // set up the various collectors
+      require('./running')({monitor, listener});
+      require('./pending')({monitor, listener});
+      listener.start();
+    },
+  },
+
+  // log tasks to console.log
+  watch: {
+    requires: ['listener'],
+    setup: async ({listener}) => {
+      listener.on('task-message', ({action, taskId}) => {
+        console.log(action, taskId);
+      });
+      listener.start();
+    },
   },
 }, ['profile', 'process']);
 

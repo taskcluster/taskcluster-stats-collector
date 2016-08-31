@@ -1,8 +1,8 @@
-suite('stats-collection', () => {
-  test('collect stats', async () => {
+suite('TaskListener', () => {
+  test('listens', async () => {
     var debug = require('debug')('test:test');
     var assert = require('assert');
-    var collector = require('../lib/collector.js');
+    var TaskListener = require('../lib/listener.js');
     var slugid = require('slugid');
     var taskcluster = require('taskcluster-client');
     var base = require('taskcluster-base');
@@ -33,7 +33,7 @@ suite('stats-collection', () => {
       mock: true,
     });
 
-    let col = await collector({
+    let listener = new TaskListener({
       credentials: cfg.pulse,
       queueName: undefined,
       routingKey: {
@@ -41,6 +41,11 @@ suite('stats-collection', () => {
       },
       monitor,
     });
+
+    let task_messages = [];
+    listener.on('task-message', ({action}) => task_messages.push(action));
+    await listener.start();
+
     var id = slugid.v4();
     var queue = new taskcluster.Queue({
       credentials: cfg.taskcluster.credentials,
@@ -68,17 +73,15 @@ suite('stats-collection', () => {
     await queue.reportCompleted(id, 1);
     debug('task completed');
 
-    await col.close();
+    await listener.close();
 
-    assert.deepEqual(monitor.counts, {
-      'tasks.stats-dummy.resolved.worker-shutdown': 1,
-      'tasks.stats-dummy.resolved.completed': 1,
-    });
-    assert(monitor.measures['tasks.stats-dummy.running']);
-    assert.equal(monitor.measures['tasks.stats-dummy.running'].length, 2);
-
-    col.flush();
-
-    assert(monitor.measures['tasks.stats-dummy.pending']);
+    assert.deepEqual(task_messages, [
+      'task-pending',
+      'task-running',
+      'task-pending',
+      'task-running',
+      'task-completed',
+    ]);
   });
 });
+
