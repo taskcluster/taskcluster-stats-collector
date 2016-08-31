@@ -121,14 +121,20 @@ class PendingCollector {
   // a pulse message or they are delivered out of order.
   check (now) {
     return Promise.all(Object.keys(this.pendingTasks).map(async (workerType) => {
-      let {taskKey, scheduled} = this.earliest(workerType, now);
-      if (taskKey && now - scheduled > MIN_CHECK_AGE * 1000) {
-        let [taskId, runId] = taskKey.split('/');
-        let taskStatus = await this.queue.status(taskId);
-        if (taskStatus.status.runs[runId].state !== 'pending') {
-          debug('task not actually pending: %s (%s)', taskKey, workerType);
-          delete this.pendingTasks[workerType][taskKey];
+      // repeatedly find the longest-pending task and verify it against the
+      // queue, until we find one that actually is pending.
+      while (1) {
+        let {taskKey, scheduled} = this.earliest(workerType, now);
+        if (taskKey && now - scheduled > MIN_CHECK_AGE * 1000) {
+          let [taskId, runId] = taskKey.split('/');
+          let taskStatus = await this.queue.status(taskId);
+          if (taskStatus.status.runs[runId].state !== 'pending') {
+            debug('task not actually pending: %s (%s)', taskKey, workerType);
+            delete this.pendingTasks[workerType][taskKey];
+            continue; // look at the next-earliest task
+          }
         }
+        break;
       }
     }));
   };

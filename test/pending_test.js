@@ -134,11 +134,25 @@ suite('pending', () => {
       assume(collector.pendingTasks).to.deeply.equal({wt: {'task1/0': january}});
     });
 
-    test('deletes pending tasks that are not really pending', async () => {
-      collector.pendingTasks = {wt: {'task1/0': january}};
+    test('deletes (multiple) pending tasks that are not really pending', async () => {
+      collector.pendingTasks = {
+        wt: {
+          'task1/0': january,
+          'task2/0': january,
+          'task2/1': january,
+          'task3/0': january,
+        },
+      };
       statuses['task1'] = {status: {runs: [{state: 'completed'}]}};
+      statuses['task2'] = {status: {runs: [{state: 'completed'}, {state: 'pending'}]}};
+      statuses['task3'] = {status: {runs: [{state: 'pending'}]}};
       await collector.check(now);
-      assume(collector.pendingTasks).to.deeply.equal({wt: {}});
+      assume(collector.pendingTasks).to.deeply.equal({
+        wt: {
+          'task2/1': january,
+          'task3/0': january,
+        },
+      });
     });
   });
 });
