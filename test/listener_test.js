@@ -9,7 +9,7 @@ suite('TaskListener', () => {
 
   let listenerTest = async () => {
     let cfg = base.config({profile: 'test'});
-    if (cfg.taskcluster.credentials.clientId !== undefined) {
+    if (cfg.taskcluster.credentials.clientId) {
       return test('listens', async() => {
         var taskdefn = {
           provisionerId: 'stats-provisioner',
@@ -24,8 +24,6 @@ suite('TaskListener', () => {
             source: 'https://github.com/taskcluster/taskcluster-stats-collector',
           },
         };
-
-        console.log(JSON.stringify(cfg));
 
         assert(cfg.pulse, 'pulse credentials required');
         assert(cfg.taskcluster, 'taskcluster credentials required');

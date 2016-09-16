@@ -1,10 +1,10 @@
 defaults:
   app:
-    queueName: !env QUEUE_NAME
+    queueName:
   pulse:
-    username: !env PULSE_USERNAME
-    password: !env PULSE_PASSWORD
+    username:
+    password:
   taskcluster:
     credentials:
-      clientId:     !env TASKCLUSTER_CLIENT_ID
-      accessToken:  !env TASKCLUSTER_ACCESS_TOKEN
+      clientId:
+      accessToken:
