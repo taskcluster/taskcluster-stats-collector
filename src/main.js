@@ -1,6 +1,7 @@
 var TaskListener  = require('./listener.js');
 var monitoring = require('taskcluster-lib-monitor');
 let base = require('taskcluster-base');
+let docs = require('taskcluster-lib-docs');
 
 let load = base.loader({
   cfg: {
@@ -24,9 +25,19 @@ let load = base.loader({
     }),
   },
 
+  docs: {
+    requires: ['cfg'],
+    setup: ({cfg}) => docs.documenter({
+      credentials: cfg.taskcluster.credentials,
+      project: 'stats-collector',
+      tier: 'core',
+      publish: true,
+    }),
+  },
+
   server: {
-    requires: ['listener', 'monitor', 'cfg'],
-    setup: async ({listener, monitor, cfg}) => {
+    requires: ['listener', 'monitor', 'cfg', 'docs'],
+    setup: async ({listener, monitor, cfg, docs}) => {
       // set up the various collectors
       require('./running')({monitor, listener});
       require('./pending')({monitor, listener});
