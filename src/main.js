@@ -31,7 +31,6 @@ let load = base.loader({
       credentials: cfg.taskcluster.credentials,
       project: 'stats-collector',
       tier: 'core',
-      publish: true,
     }),
   },
 
