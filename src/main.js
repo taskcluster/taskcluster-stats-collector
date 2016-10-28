@@ -1,9 +1,9 @@
 var TaskListener  = require('./listener.js');
 var monitoring = require('taskcluster-lib-monitor');
-let loader = require('taskcluster-lib-loader');
+let base = require('taskcluster-base');
 let docs = require('taskcluster-lib-docs');
 
-let load = loader({
+let load = base.loader({
   cfg: {
     requires: ['profile'],
     setup: ({profile}) => base.config({profile}),
