@@ -28,7 +28,8 @@
     "taskcluster-client": "^0.23.16",
     "taskcluster-lib-docs": "^3.0.2",
     "taskcluster-lib-monitor": "^0.2.1",
-    "tc-rules": "^3.0.1"
+    "tc-rules": "^3.0.1",
+    "typed-env-config": "^1.0.0"
   },
   "engines": {
     "node": "^5.10.1",
