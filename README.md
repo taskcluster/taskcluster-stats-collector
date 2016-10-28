@@ -1,21 +1,25 @@
-#Taskcluster Stats Collector
+# Taskcluster Stats Collector
 
 [![Build Status](https://travis-ci.org/taskcluster/taskcluster-stats-collector.svg?branch=master)](https://travis-ci.org/taskcluster/taskcluster-stats-collector)
 
-Reads taskcluster messages off pulse and stores relevant statistics into influxDB.
+Reads TaskCluster messages off pulse and creates relevant statistics.
 
+# Data Collected
 
-##Data Collected
+## Running Tasks
 
-All points are stored per run. 
+* `tasks.<workerType>.resolved.<reasonResolved>` measures the time, in
+  milliseconds, to resolve task with the given reason in the given workerType.
+  Tasks are only measured when they are resolved, so this does not include
+  times for running tasks.
 
-Pending duration (scheduled->running): [duration,provisionerId,workerType,time=scheduled]
+## Pending Tasks
 
-Running duration (running->finished): [duration,provisionerId,workerType,time=started]
+* `tasks.<workerType>.pending` measures the time that each task is pending.
+  Tasks are measured constantly, even if they are still pending, making this a
+  valid measure of the current pending time.
 
-Reason resolved: [count=1,reasonResolved,provisionerId,workerType,time=resolved]
-
-##Testing
+# Testing
 
 First setup your `user-config.yml` based on `user-config-example.yml`. Then run
 
