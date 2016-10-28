@@ -23,7 +23,7 @@
     "mocha": "^2.4.5",
     "mocha-eslint": "^2.0.1",
     "slugid": "1.0.3",
-    "taskcluster-base": "^0.12.2",
+    "taskcluster-lib-loader": "1.1.0",
     "taskcluster-client": "^0.23.16",
     "taskcluster-lib-docs": "^3.0.2",
     "taskcluster-lib-monitor": "^0.2.1",
