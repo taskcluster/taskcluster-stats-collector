@@ -5,10 +5,10 @@ suite('TaskListener', () => {
     var TaskListener = require('../lib/listener.js');
     var slugid = require('slugid');
     var taskcluster = require('taskcluster-client');
-    var base = require('taskcluster-base');
     var monitoring = require('taskcluster-lib-monitor');
+    let config = require('typed-env-config');
 
-    let cfg = base.config({profile: 'test'});
+    let cfg = config({profile: 'test'});
 
     var taskdefn = {
       provisionerId: 'stats-provisioner',
