@@ -1,6 +1,4 @@
 defaults:
-  app:
-    queueName: !env QUEUE_NAME
   pulse:
     username: !env PULSE_USERNAME
     password: !env PULSE_PASSWORD
