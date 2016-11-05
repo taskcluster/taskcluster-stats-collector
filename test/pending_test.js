@@ -1,158 +1,117 @@
-suite('pending', () => {
+suite('collector.pending', () => {
   let assume = require('assume');
-  let {PendingCollector} = require('../lib/pending');
+  let helper = require('./helper');
+  let fakes;
 
-  let now = new Date(2016, 7, 1).getTime();
-  let january = new Date(2016, 0, 1).getTime();
-  let february = new Date(2016, 1, 1).getTime();
-  let march = new Date(2016, 2, 1).getTime();
-
-  let monitors;
-  let fakemonitor = {measure: (name, value) => { monitors[name] = value; }};
-
-  let statuses = {};
-  let fakequeue = {
-    status: (taskId) => {
-      assume(statuses).to.include(taskId);
-      return Promise.resolve(statuses[taskId]);
-    },
+  let fakeTaskChange = ({state, scheduled, taskId}) => {
+    fakes.listener.emit('task-message', {
+      action: `task-${state}`,
+      payload: {
+        status: {
+          taskId: taskId || 'taskid',
+          workerType: 'wt',
+          runs: [
+            {scheduled: new Date(scheduled || fakes.clock.msec() - 1000)},
+          ],
+        },
+        runId: 0,
+      },
+    });
   };
 
-  let collector;
+  let assertMeasures = (expected) => {
+    assume(fakes.monitor.measures).to.deeply.equal(expected);
+    fakes.monitor.measures = {};
+  };
 
-  before(() => {
-    collector = new PendingCollector({monitor: fakemonitor, listener: undefined});
-    collector.queue = fakequeue;
+  beforeEach(async () => {
+    fakes = await helper.makeCollector('pending');
   });
 
-  beforeEach(() => {
-    monitors = {};
-    statuses = {};
-    collector.pendingTasks = {};
-    collector.readyWorkerTypes = {};
+  test('nothing happens without input', async () => {
+    await fakes.clock.tick(600000);
+    assertMeasures({});
   });
 
-  suite('earliest', () => {
-    test('returns null, now for an empty set of tasks', () => {
-      collector.pendingTasks['wt'] = {};
-      let {taskKey, scheduled} = collector.earliest('wt', now);
-      assume(taskKey).equals(null);
-      assume(scheduled).equals(now);
-    });
-
-    test('returns null, now for a missing set of tasks', () => {
-      collector.pendingTasks['wt'] = {};
-      let {taskKey, scheduled} = collector.earliest('wt', now);
-      assume(taskKey).equals(null);
-      assume(scheduled).equals(now);
-    });
-
-    test('returns oldest task given a few', () => {
-      collector.pendingTasks = {
-        wt: {
-          mar: march,
-          feb: february,
-          jan: january,
-        },
-      };
-
-      let {taskKey, scheduled} = collector.earliest('wt', now);
-      assume(taskKey).equals('jan');
-      assume(scheduled).equals(january);
-    });
+  test('at startup, unpaired task runs are ignored', async () => {
+    fakeTaskChange({state: 'running', taskId: 't1'});
+    fakeTaskChange({state: 'running', taskId: 't2'});
+    await fakes.clock.tick(600000);
+    assertMeasures({});
   });
 
-  suite('update', () => {
-    test('records an initial pending message correctly', () => {
-      collector.update('wt', 'task1', true, january);
-      assume(collector.pendingTasks).to.deeply.equal({wt: {task1: january}});
-      assume(collector.readyWorkerTypes).to.deeply.equal({});
-    });
-
-    test('records nothing except the workerType for an initial non-pending', () => {
-      collector.update('wt', 'task1', false, january);
-      assume(collector.pendingTasks).to.deeply.equal({wt: {}});
-      assume(collector.readyWorkerTypes).to.deeply.equal({});
-    });
-
-    test('records a ready worker type after seeing both pending and non-pending', () => {
-      collector.update('wt', 'task1', true, january);
-      collector.update('wt', 'task1', false, january);
-      assume(collector.pendingTasks).to.deeply.equal({wt: {}});
-      assume(collector.readyWorkerTypes).to.deeply.equal({wt: true});
-    });
+  test('at startup, unpaired pending tasks are ignored', async () => {
+    fakes.queue.setStatus('t1', 'pending');
+    fakeTaskChange({state: 'pending', taskId: 't1'});
+    await fakes.clock.tick(1000);
+    fakes.queue.setStatus('t2', 'pending');
+    fakeTaskChange({state: 'pending', taskId: 't2'});
+    await fakes.clock.tick(600000);
+    assertMeasures({});
   });
 
-  suite('flush', () => {
-    test('does nothing for workerTypes not in readyWorkerTypes', () => {
-      collector.pendingTasks = {wt: {task1: january}};
-      collector.readyWorkerTypes = {};
+  test('after a pending/running pair, pending tasks are measured periodically', async () => {
+    let scheduled = fakes.clock.msec();
 
-      collector.flush(now);
-      assume(monitors).to.deeply.equal({});
-    });
+    fakeTaskChange({state: 'pending', taskId: 'primer', scheduled});
+    fakeTaskChange({state: 'running', taskId: 'primer', scheduled});
 
-    test('measures to the oldest time for each workerType', () => {
-      collector.pendingTasks = {
-        wt1: {
-          task1: january,
-          task2: march,
-        },
-        wt2: {
-          task5: february,
-        },
-      };
-      collector.readyWorkerTypes = {
-        wt1: true,
-        wt2: true,
-      };
-      collector.flush(now);
-      assume(monitors).to.deeply.equal({
-        'tasks.wt1.pending': now - january,
-        'tasks.wt2.pending': now - february,
-      });
-    });
+    fakes.queue.setStatus('t1', 'pending');
+    fakeTaskChange({state: 'pending', taskId: 't1', scheduled});
+    await fakes.clock.tick(80000);
+    assertMeasures({'tasks.wt.pending': [60000]}); // measured at the flush interval
   });
 
-  suite('check', () => {
-    test('ignores workerTypes with no pending tasks', async () => {
-      collector.pendingTasks = {wt: {}};
-      await collector.check(now);
-      assume(collector.pendingTasks).to.deeply.equal({wt: {}});
-    });
+  test('the measure represents the longest-pending task', async () => {
+    fakeTaskChange({state: 'pending', taskId: 'primer', scheduled: fakes.clock.msec()});
+    fakeTaskChange({state: 'running', taskId: 'primer', scheduled: fakes.clock.msec()});
 
-    test('ignores workerTypes with recent pending tasks', async () => {
-      collector.pendingTasks = {wt: {'task1/0': now - 200}};
-      await collector.check(now);
-      assume(collector.pendingTasks).to.deeply.equal({wt: {'task1/0': now - 200}});
-    });
+    fakes.queue.setStatus('t1', 'pending');
+    let scheduledT1 = fakes.clock.msec();
+    fakeTaskChange({state: 'pending', taskId: 't1', scheduled: scheduledT1});
+    await fakes.clock.tick(10000);
 
-    test('does nothing for real pending tasks', async () => {
-      collector.pendingTasks = {wt: {'task1/0': january}};
-      statuses['task1'] = {status: {runs: [{state: 'pending'}]}};
-      await collector.check(now);
-      assume(collector.pendingTasks).to.deeply.equal({wt: {'task1/0': january}});
-    });
+    fakes.queue.setStatus('t2', 'pending');
+    let scheduledT2 = fakes.clock.msec();
+    fakeTaskChange({state: 'pending', taskId: 't2', scheduled: scheduledT2});
+    await fakes.clock.tick(10000);
 
-    test('deletes (multiple) pending tasks that are not really pending', async () => {
-      collector.pendingTasks = {
-        wt: {
-          'task1/0': january,
-          'task2/0': january,
-          'task2/1': january,
-          'task3/0': january,
-        },
-      };
-      statuses['task1'] = {status: {runs: [{state: 'completed'}]}};
-      statuses['task2'] = {status: {runs: [{state: 'completed'}, {state: 'pending'}]}};
-      statuses['task3'] = {status: {runs: [{state: 'pending'}]}};
-      await collector.check(now);
-      assume(collector.pendingTasks).to.deeply.equal({
-        wt: {
-          'task2/1': january,
-          'task3/0': january,
-        },
-      });
-    });
+    fakes.queue.setStatus('t3', 'pending');
+    fakeTaskChange({state: 'pending', taskId: 't3', scheduled: fakes.clock.msec()});
+    await fakes.clock.tick(10000);
+
+    await fakes.clock.tick(30000);
+    assertMeasures({'tasks.wt.pending': [fakes.clock.msec() - scheduledT1]});
+
+    fakeTaskChange({state: 'running', taskId: 't1'});
+    fakeTaskChange({state: 'running', taskId: 't3'});
+
+    await fakes.clock.tick(60000);
+    assertMeasures({'tasks.wt.pending': [fakes.clock.msec() - scheduledT2]});
+  });
+
+  test('long-pending tasks that are not actually pending are found out by check', async () => {
+    fakeTaskChange({state: 'pending', taskId: 'primer', scheduled: fakes.clock.msec()});
+    fakeTaskChange({state: 'running', taskId: 'primer', scheduled: fakes.clock.msec()});
+
+    fakes.queue.setStatus('t1', 'pending');
+    let scheduledT1 = fakes.clock.msec();
+    fakeTaskChange({state: 'pending', taskId: 't1', scheduled: scheduledT1});
+    await fakes.clock.tick(60000);
+    assertMeasures({'tasks.wt.pending': [fakes.clock.msec() - scheduledT1]});
+
+    fakes.queue.setStatus('t2', 'pending');
+    fakeTaskChange({state: 'pending', taskId: 't2'});
+
+    fakes.queue.setStatus('t1', 'running');
+    fakes.queue.setStatus('t2', 'running');
+
+    // how long it takes to discover this is an implementation detail, so
+    // ignore the intervening measures..
+    await fakes.clock.tick(500000);
+    fakes.monitor.measures = {};
+
+    await fakes.clock.tick(60000);
+    assertMeasures({'tasks.wt.pending': [0]});
   });
 });

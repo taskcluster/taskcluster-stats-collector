@@ -1,8 +1,9 @@
-var debug = require('debug')('stats-collector:collector');
+var debug = require('debug')('TaskListener');
 var _ = require('lodash');
 var assert = require('assert');
 var taskcluster = require('taskcluster-client');
 var EventEmitter = require('events');
+let collectorManager = require('./collectormanager');
 
 class TaskListener extends EventEmitter {
   /**
@@ -35,15 +36,23 @@ class TaskListener extends EventEmitter {
     this.listener.bind(queueEvents.taskFailed(routingKey));
     this.listener.bind(queueEvents.taskException(routingKey));
     this.listener.on('message', message => this.onMessage(message));
+
+    collectorManager.on('started', () => {
+      return this.start().catch((err) => {
+        console.error(err);
+        console.log('crashing');
+        process.exit(1);
+      });
+    });
   }
 
   async start () {
+    debug('starting');
     await this.listener.resume();
-    debug('Listening');
   }
 
   async close () {
-    debug('listener shutting down...');
+    debug('hutting down');
     await this.connection.close();
   }
 
