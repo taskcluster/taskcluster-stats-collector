@@ -5,6 +5,7 @@ let docs = require('taskcluster-lib-docs');
 let config = require('typed-env-config');
 let collectorManager = require('./collectormanager');
 let taskcluster = require('taskcluster-client');
+let signalfx = require('signalfx');
 import Clock from './clock';
 
 collectorManager.setup();
@@ -40,6 +41,11 @@ let load = loader(Object.assign({
   queue: {
     requires: [],
     setup: () => new taskcluster.Queue(),
+  },
+
+  ingest: {
+    requires: ['cfg'],
+    setup: async ({cfg}) => new signalfx.Ingest(cfg.signalfx.apiToken),
   },
 
   docs: {

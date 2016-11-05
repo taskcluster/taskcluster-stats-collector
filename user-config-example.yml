@@ -1,4 +1,6 @@
 defaults:
+  signalfx:
+    apiToken: '...'
   pulse:
     username: '...'
     password: '...'
