@@ -1,9 +1,11 @@
-var _ = require('lodash');
-var debug = require('debug')('stats-collector:running');
+import collectorManager from '../collectormanager';
+import _ from 'lodash';
 
-// collect and measure runtimes and resolution reasons
-
-module.exports = ({monitor, listener}) => {
+collectorManager.collector({
+  name: 'running',
+  requires: ['monitor', 'listener'],
+  // support emitting via statsum or directly as a time series
+}, ({monitor, listener, debug}) => {
   listener.on('task-message', ({action, payload}) => {
     try {
       if (action === 'task-pending' || action === 'task-running') {
@@ -31,4 +33,4 @@ module.exports = ({monitor, listener}) => {
             action, err, err, err.stack);
     }
   });
-};
+});

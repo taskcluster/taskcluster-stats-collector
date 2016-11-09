@@ -3,8 +3,13 @@ var monitoring = require('taskcluster-lib-monitor');
 let loader = require('taskcluster-lib-loader');
 let docs = require('taskcluster-lib-docs');
 let config = require('typed-env-config');
+let collectorManager = require('./collectormanager');
+let taskcluster = require('taskcluster-client');
+import Clock from './clock';
 
-let load = loader({
+collectorManager.setup();
+
+let load = loader(Object.assign({
   cfg: {
     requires: ['profile'],
     setup: ({profile}) => config({profile}),
@@ -15,6 +20,7 @@ let load = loader({
     setup: ({cfg}) => monitoring({
       project: 'tc-stats-collector',
       credentials: cfg.taskcluster.credentials,
+      mock: process.env.NODE_ENV !== 'production',
     }),
   },
 
@@ -24,6 +30,16 @@ let load = loader({
       credentials: cfg.pulse,
       routingKey: {}, // different in tests
     }),
+  },
+
+  clock: {
+    requires: ['monitor'],
+    setup: ({monitor}) => new Clock({monitor}),
+  },
+
+  queue: {
+    requires: [],
+    setup: () => new taskcluster.Queue(),
   },
 
   docs: {
@@ -36,12 +52,9 @@ let load = loader({
   },
 
   server: {
-    requires: ['listener', 'monitor', 'cfg', 'docs'],
-    setup: async ({listener, monitor, cfg, docs}) => {
-      // set up the various collectors
-      require('./running')({monitor, listener});
-      require('./pending')({monitor, listener});
-      listener.start();
+    requires: ['collectors', 'docs'],
+    setup: async ({collectors, docs}) => {
+      collectorManager.start();
     },
   },
 
@@ -55,12 +68,14 @@ let load = loader({
       listener.start();
     },
   },
-}, ['profile', 'process']);
+},
+  // include a component for each collector
+  collectorManager.components()),
+  ['profile']);
 
 // If this file is executed launch component from first argument
 if (!module.parent) {
   load(process.argv[2], {
-    process: process.argv[2],
     profile: process.env.NODE_ENV,
   }).catch(err => {
     console.log(err.stack);
