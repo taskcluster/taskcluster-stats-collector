@@ -27,7 +27,7 @@ collectorManager.collector({
   name: 'pending',
   requires: ['monitor', 'listener', 'queue', 'clock'],
   // support emitting via statsum or directly as a time series
-}, ({monitor, listener, queue, debug, clock}) => {
+}, function () {
 
   // mappings from task key to pending time, keyed by workerType; an empty list
   // here is significant in that it means there is nothing pending for that
@@ -49,10 +49,10 @@ collectorManager.collector({
     }
 
     if (isPending) {
-      debug('task pending: %s at %s (%s)', taskKey, scheduled, workerType);
+      this.debug('task pending: %s at %s (%s)', taskKey, scheduled, workerType);
       workerTypeState[taskKey] = new Date(scheduled).getTime();
     } else {
-      debug('task no longer pending: %s (%s)', taskKey, workerType);
+      this.debug('task no longer pending: %s (%s)', taskKey, workerType);
       if (workerTypeState[taskKey]) {
         // having seen this task through its entire pending cycle, let's
         // assume that we are now reporting accurate pending stats for this
@@ -81,8 +81,8 @@ collectorManager.collector({
       let {taskKey, scheduled} = earliest(workerType, now);
       let waiting = taskKey ? now - scheduled : 0;
       let oldWorkerType = workerType.split('.')[1];
-      monitor.measure(`tasks.${oldWorkerType}.pending`, waiting); // old measure
-      monitor.measure(`tasks.${workerType}.pending`, waiting);
+      this.monitor.measure(`tasks.${oldWorkerType}.pending`, waiting); // old measure
+      this.monitor.measure(`tasks.${workerType}.pending`, waiting);
     }
   };
 
@@ -98,9 +98,9 @@ collectorManager.collector({
         let {taskKey, scheduled} = earliest(workerType, now);
         if (taskKey && now - scheduled > MIN_CHECK_AGE * 1000) {
           let [taskId, runId] = taskKey.split('/');
-          let taskStatus = await queue.status(taskId);
+          let taskStatus = await this.queue.status(taskId);
           if (taskStatus.status.runs[runId].state !== 'pending') {
-            debug('task not actually pending: %s (%s)', taskKey, workerType);
+            this.debug('task not actually pending: %s (%s)', taskKey, workerType);
             delete pendingTasks[workerType][taskKey];
             continue; // look at the next-earliest task
           }
@@ -110,7 +110,7 @@ collectorManager.collector({
     }));
   };
 
-  listener.on('task-message', ({action, payload}) => {
+  this.listener.on('task-message', ({action, payload}) => {
     try {
       // skip some very noisy, useless provisioners
       if (IGNORE_PROVISIONERS.indexOf(payload.status.provisionerId) !== -1) {
@@ -123,18 +123,18 @@ collectorManager.collector({
 
       update(workerType, taskKey, isPending, scheduled);
     } catch (err) {
-      debug('Failed to process message %s with error: %s, as JSON: %j',
+      this.debug('Failed to process message %s with error: %s, as JSON: %j',
             action, err, err, err.stack);
     }
   });
 
   // set up periodic flushes
-  clock.periodically(FLUSH_INTERVAL * 1000, 'flush', () => {
-    return flush(clock.msec());
+  this.clock.periodically(FLUSH_INTERVAL * 1000, 'flush', () => {
+    return flush(this.clock.msec());
   });
 
   // set up periodic checks of the oldest task
-  clock.periodically(CHECK_INTERVAL * 1000, 'check', () => {
-    return check(clock.msec());
+  this.clock.periodically(CHECK_INTERVAL * 1000, 'check', () => {
+    return check(this.clock.msec());
   });
 });

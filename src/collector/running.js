@@ -5,8 +5,8 @@ collectorManager.collector({
   name: 'running',
   requires: ['monitor', 'listener'],
   // support emitting via statsum or directly as a time series
-}, ({monitor, listener, debug}) => {
-  listener.on('task-message', ({action, payload}) => {
+}, function () {
+  this.listener.on('task-message', ({action, payload}) => {
     try {
       if (action === 'task-pending' || action === 'task-running') {
         return;
@@ -24,12 +24,12 @@ collectorManager.collector({
         if (run.reasonResolved !== 'deadline-exceeded') {
           var started = new Date(run.started);
           var resolved = new Date(run.resolved);
-          monitor.measure(`tasks.${workerType}.running`, resolved - started);
+          this.monitor.measure(`tasks.${workerType}.running`, resolved - started);
         }
-        monitor.count(`tasks.${workerType}.resolved.${run.reasonResolved}`);
+        this.monitor.count(`tasks.${workerType}.resolved.${run.reasonResolved}`);
       });
     } catch (err) {
-      debug('Failed to process message %s with error: %s, as JSON: %j',
+      this.debug('Failed to process message %s with error: %s, as JSON: %j',
             action, err, err, err.stack);
     }
   });

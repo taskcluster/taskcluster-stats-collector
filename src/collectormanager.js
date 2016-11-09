@@ -3,6 +3,26 @@ import fs from 'fs';
 import debug from 'debug';
 var EventEmitter = require('events');
 
+/**
+ * Manage a set of collectors.
+ *
+ * A collector is responsible for producing one or more metric time-series as
+ * output.  As input, it might take in other time-series as input, or listen
+ * for events of some sort, or poll some external resource.
+ *
+ * Collectors are "declared" to the collector manager, providing lots of metadata
+ * on input sources and other requirements and the nature of the output.
+ *
+ * This has a few nice benefits:
+ *  - the metadata can be made available to API consumers, allowing UI's that
+ *    present an sensible organization to a sea of time-series
+ *  - individual collectors can be run and tested in isolation
+ *
+ * Each collector is represented as a single tc-lib-loader component, with
+ * requirements set appropriately.  This allows easy dependency injection for
+ * testing, and minimizes the resources required for a test-run of a single
+ * collector.
+ */
 class CollectorManager extends EventEmitter {
   constructor () {
     super();
@@ -24,7 +44,24 @@ class CollectorManager extends EventEmitter {
    * Declare a collector
    *
    * Each file in collectors/*.js can call this one or more times to declare
-   * collectors.
+   * collectors.  The available options are:
+   *
+   * {
+   *    name: '..',     // name of the collector
+   *    requires: [     // required loaded components, such as:
+   *      'clock',      // ..utility for time-related functionality
+   *      'queue',      // ..the TC queue client
+   *      'monitor',    // ..the TC-lib-monitor instance
+   *      'listener',   // ..a TaskListener
+   *    ],              // see main.js for the full set
+   * }
+   *
+   * The setup function is called with `this` bound to an object with props:
+   *
+   * {
+   *    debug: ..,      // an instance of the debug module
+   *    ..,             // any `options.requires` elements, included by name
+   * }
    */
   collector (options, setup) {
     if (!options.name) {
@@ -56,7 +93,7 @@ class CollectorManager extends EventEmitter {
         setup: dependencies => {
           dependencies.debug = debug(options._fullname);
           dependencies.debug('setting up');
-          return options._setup(dependencies);
+          return options._setup.call(dependencies);
         },
       };
     });
