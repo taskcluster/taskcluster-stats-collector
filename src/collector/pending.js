@@ -12,6 +12,17 @@ const CHECK_INTERVAL = 120; // seconds
 // thresholds for pending tasks.
 const MIN_CHECK_AGE = 300; // seconds
 
+// useless test provisioners
+const IGNORE_PROVISIONERS = [
+  'test-provisioner',
+  'dummy-test-provisioner',
+  'no-provisioner',
+  'no-provisioning-nope',
+  'test-dummy-provisioner',
+  'tc-worker-provisioner',
+  'stats-provisioner',
+];
+
 collectorManager.collector({
   name: 'pending',
   requires: ['monitor', 'listener', 'queue', 'clock'],
@@ -101,6 +112,10 @@ collectorManager.collector({
 
   listener.on('task-message', ({action, payload}) => {
     try {
+      // skip some very noisy, useless provisioners
+      if (IGNORE_PROVISIONERS.indexOf(payload.status.provisionerId) !== -1) {
+        return;
+      }
       let taskKey = `${payload.status.taskId}/${payload.runId}`;
       let workerType = `${payload.status.provisionerId}.${payload.status.workerType}`;
       let isPending = action === 'task-pending';
