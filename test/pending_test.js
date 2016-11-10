@@ -9,6 +9,7 @@ suite('collector.pending', () => {
       payload: {
         status: {
           taskId: taskId || 'taskid',
+          provisionerId: 'prov',
           workerType: 'wt',
           runs: [
             {scheduled: new Date(scheduled || fakes.clock.msec() - 1000)},
@@ -59,7 +60,10 @@ suite('collector.pending', () => {
     fakes.queue.setStatus('t1', 'pending');
     fakeTaskChange({state: 'pending', taskId: 't1', scheduled});
     await fakes.clock.tick(80000);
-    assertMeasures({'tasks.wt.pending': [60000]}); // measured at the flush interval
+    assertMeasures({
+      'tasks.wt.pending': [60000],
+      'tasks.prov.wt.pending': [60000],
+    }); // measured at the flush interval
   });
 
   test('the measure represents the longest-pending task', async () => {
@@ -81,13 +85,19 @@ suite('collector.pending', () => {
     await fakes.clock.tick(10000);
 
     await fakes.clock.tick(30000);
-    assertMeasures({'tasks.wt.pending': [fakes.clock.msec() - scheduledT1]});
+    assertMeasures({
+      'tasks.wt.pending': [fakes.clock.msec() - scheduledT1],
+      'tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT1],
+    });
 
     fakeTaskChange({state: 'running', taskId: 't1'});
     fakeTaskChange({state: 'running', taskId: 't3'});
 
     await fakes.clock.tick(60000);
-    assertMeasures({'tasks.wt.pending': [fakes.clock.msec() - scheduledT2]});
+    assertMeasures({
+      'tasks.wt.pending': [fakes.clock.msec() - scheduledT2],
+      'tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT2],
+    });
   });
 
   test('long-pending tasks that are not actually pending are found out by check', async () => {
@@ -98,7 +108,10 @@ suite('collector.pending', () => {
     let scheduledT1 = fakes.clock.msec();
     fakeTaskChange({state: 'pending', taskId: 't1', scheduled: scheduledT1});
     await fakes.clock.tick(60000);
-    assertMeasures({'tasks.wt.pending': [fakes.clock.msec() - scheduledT1]});
+    assertMeasures({
+      'tasks.wt.pending': [fakes.clock.msec() - scheduledT1],
+      'tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT1],
+    });
 
     fakes.queue.setStatus('t2', 'pending');
     fakeTaskChange({state: 'pending', taskId: 't2'});
@@ -112,6 +125,9 @@ suite('collector.pending', () => {
     fakes.monitor.measures = {};
 
     await fakes.clock.tick(60000);
-    assertMeasures({'tasks.wt.pending': [0]});
+    assertMeasures({
+      'tasks.wt.pending': [0],
+      'tasks.prov.wt.pending': [0],
+    });
   });
 });

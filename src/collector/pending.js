@@ -69,6 +69,8 @@ collectorManager.collector({
     for (let workerType of Object.keys(readyWorkerTypes)) {
       let {taskKey, scheduled} = earliest(workerType, now);
       let waiting = taskKey ? now - scheduled : 0;
+      let oldWorkerType = workerType.split('.')[1];
+      monitor.measure(`tasks.${oldWorkerType}.pending`, waiting); // old measure
       monitor.measure(`tasks.${workerType}.pending`, waiting);
     }
   };
@@ -100,7 +102,7 @@ collectorManager.collector({
   listener.on('task-message', ({action, payload}) => {
     try {
       let taskKey = `${payload.status.taskId}/${payload.runId}`;
-      let workerType = payload.status.workerType;
+      let workerType = `${payload.status.provisionerId}.${payload.status.workerType}`;
       let isPending = action === 'task-pending';
       let scheduled = payload.status.runs[payload.runId].scheduled;
 
