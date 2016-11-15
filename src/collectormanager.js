@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import debug from 'debug';
+import {find} from 'lodash';
 var EventEmitter = require('events');
 
 /**
@@ -66,6 +67,9 @@ class CollectorManager extends EventEmitter {
   collector (options, setup) {
     if (!options.name) {
       throw new Error('Collector must have a name');
+    }
+    if (find(this.collectors, {name: options.name})) {
+      throw new Error('Collector must have a unique name');
     }
     options._fullname = `collector.${options.name}`;
     options._setup = setup;
