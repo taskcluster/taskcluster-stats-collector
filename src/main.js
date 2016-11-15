@@ -7,6 +7,7 @@ let collectorManager = require('./collectormanager');
 let taskcluster = require('taskcluster-client');
 let signalfx = require('signalfx');
 import Clock from './clock';
+import SignalFxRest from './signalfx-rest';
 
 collectorManager.setup();
 
@@ -45,7 +46,12 @@ let load = loader(Object.assign({
 
   ingest: {
     requires: ['cfg'],
-    setup: async ({cfg}) => new signalfx.Ingest(cfg.signalfx.apiToken),
+    setup: ({cfg}) => new signalfx.Ingest(cfg.signalfx.apiToken),
+  },
+
+  signalFxRest: {
+    requires: ['cfg'],
+    setup: ({cfg}) => new SignalFxRest(cfg.signalfx.apiToken),
   },
 
   docs: {
