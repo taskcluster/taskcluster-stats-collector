@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import debug from 'debug';
-import {find} from 'lodash';
+import {every, find, filter} from 'lodash';
 var EventEmitter = require('events');
 
 /**
@@ -33,7 +33,8 @@ class CollectorManager extends EventEmitter {
   /**
    * Load all collector implementations in collectors/*.js
    */
-  setup () {
+  setup (argv) {
+    this.argv = argv;
     fs.readdirSync(path.join(__dirname, 'collector')).forEach((f) => {
       if (f.endsWith('.js')) {
         require('./collector/' + f);
@@ -82,11 +83,22 @@ class CollectorManager extends EventEmitter {
    * a `collectors` component that loads them all.
    */
   components () {
-    // TODO: support only loading some, if process.env.COLLECTORS is set (for
-    // use in development)
+    // support only loading only one collector, for development
+    let collectors = this.collectors;
+
+    if (this.argv.collectors) {
+      this.argv.collectors.forEach(name => {
+        if (!find(collectors, {name})) {
+          throw new Error(`No such collector ${name}`);
+        }
+      });
+
+      collectors = filter(collectors, ({name}) => this.argv.collectors.indexOf(name) !== -1);
+    }
+
     const components = {
       collectors: {
-        requires: this.collectors.map(({_fullname}) => _fullname),
+        requires: collectors.map(({_fullname}) => _fullname),
         setup: () => null,
       },
     };

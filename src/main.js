@@ -8,8 +8,15 @@ let taskcluster = require('taskcluster-client');
 let signalfx = require('signalfx');
 import Clock from './clock';
 import SignalFxRest from './signalfx-rest';
+import yargs from 'yargs';
 
-collectorManager.setup();
+const argv = yargs
+  .usage('Usage: $0 --collectors C')
+  .describe('collectors', 'Collectors to run (default all)')
+  .array('collectors')
+  .argv;
+
+collectorManager.setup(argv);
 
 let load = loader(Object.assign({
   cfg: {
@@ -88,6 +95,7 @@ let load = loader(Object.assign({
 // If this file is executed launch component from first argument
 if (!module.parent) {
   load(process.argv[2], {
+    argv,
     profile: process.env.NODE_ENV,
   }).catch(err => {
     console.log(err.stack);
