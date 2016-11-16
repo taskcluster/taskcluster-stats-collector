@@ -82,11 +82,20 @@ class CollectorManager extends EventEmitter {
    * a `collectors` component that loads them all.
    */
   components () {
-    // TODO: support only loading some, if process.env.COLLECTORS is set (for
-    // use in development)
+    // support only loading only one collector, for development
+    let collectors = this.collectors;
+
+    if (process.env.ONLY_COLLECTOR) {
+      const collector = find(collectors, {name: process.env.ONLY_COLLECTOR});
+      if (!collector) {
+        throw new Error(`Collector ${process.env.ONLY_COLLECTOR} not found`);
+      }
+      collectors = [collector];
+    }
+
     const components = {
       collectors: {
-        requires: this.collectors.map(({_fullname}) => _fullname),
+        requires: collectors.map(({_fullname}) => _fullname),
         setup: () => null,
       },
     };
