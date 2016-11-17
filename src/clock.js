@@ -12,6 +12,25 @@ class Clock {
     return new Date().getTime();
   }
 
+  // Run fn at the given time
+  // TODO: test
+  at (name, when, fn) {
+    let delay = when - new Date();
+    if (delay < 0) {
+      delay = 0;
+    }
+
+    setTimeout(async () => {
+      debug('Running ' + name);
+      try {
+        await fn();
+      } catch (err) {
+        this.monitor.reportError(err);
+        console.log('%s failed: %s', name, err);
+      }
+    }, delay);
+  }
+
   // Run fn periodically, whether async or not, surviving errors
   periodically (interval, name, fn) {
     setTimeout(async () => {
