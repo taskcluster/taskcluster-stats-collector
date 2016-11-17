@@ -59,6 +59,13 @@ class FakeClock {
     return this._msec;
   }
 
+  setTimeout (name, fn, delay) {
+    if (delay < 0) {
+      throw new Error('setTimeout called with a negative delay');
+    }
+    this._timers.push({name, fn, next: this._msec + when});
+  }
+
   periodically (interval, name, fn) {
     // note that, in testing, errors are fatal
     const run = async () => {
@@ -66,6 +73,11 @@ class FakeClock {
       this._timers.push({name, run, next: this._msec + interval});
     };
     this._timers.push({name, run, next: this._msec + interval});
+  }
+
+  throttle (fn) {
+    // for testing, do not apply throttling
+    return fn;
   }
 };
 
