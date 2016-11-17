@@ -71,6 +71,11 @@ class FakeClock {
     };
     this._timers.push({name, run, next: this._msec + interval});
   }
+
+  throttle (fn) {
+    // for testing, do not apply throttling
+    return fn;
+  }
 };
 
 export const makeCollector = async name => {

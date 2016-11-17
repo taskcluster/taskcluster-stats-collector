@@ -1,4 +1,5 @@
 import debugModule from 'debug';
+import _ from 'lodash';
 
 const debug = debugModule('clock');
 
@@ -45,6 +46,11 @@ class Clock {
         await new Promise(resolve => setTimeout(resolve, interval));
       }
     }, interval);
+  }
+
+  // like lodash's throttle, but without throttling tests
+  throttle () {
+    return _.throttle.apply(_, arguments);
   }
 };
 
