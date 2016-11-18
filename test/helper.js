@@ -59,6 +59,10 @@ class FakeClock {
     return this._msec;
   }
 
+  at (name, when, fn) {
+    this._timers.push({name, fn, next: when});
+  }
+
   periodically (interval, name, fn) {
     // note that, in testing, errors are fatal
     const run = async () => {
@@ -66,6 +70,11 @@ class FakeClock {
       this._timers.push({name, run, next: this._msec + interval});
     };
     this._timers.push({name, run, next: this._msec + interval});
+  }
+
+  throttle (fn) {
+    // for testing, do not apply throttling
+    return fn;
   }
 };
 

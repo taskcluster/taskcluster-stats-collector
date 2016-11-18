@@ -1,4 +1,6 @@
 defaults:
+  signalfx:
+    apiToken: !env SIGNALFX_API_TOKEN
   pulse:
     username: !env PULSE_USERNAME
     password: !env PULSE_PASSWORD
