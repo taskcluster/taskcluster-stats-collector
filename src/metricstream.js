@@ -45,8 +45,19 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
   let latestDatapoint = start;
   let liveData = false;
 
+  // TODO: estimate delay by decreasing slowly when hitting, then increasing
+  // more quickly when missing; e.g., subtract 5ms on hit, add 100ms on miss,
+  // for a 20:1 hit ratio
+
+  // TODO: differentiate a delay miss from a missed datapoint (say, missing by
+  // the smaller of half the resolution or 1m); in that case, reset and aim for
+  // the next resolution point.  Some data series may have a lot of missing
+  // data points, so test that thoroughly to avoid 10's of hits per period.
+
+  // bear in mind this is temporary until signalflow is available..
+
   // see comments on waking up to query the next datapoint, below
-  const DELAY_REDUCTION = 100;
+  const DELAY_REDUCTION = 1000;
   const BACKOFF_START = 500;
   const BACKOFF_FACTOR = 1.5;
   let delay = 1000; // starting guess
@@ -101,6 +112,7 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
     // but is pretty key to getting timely results.
     if (liveData) {
       const wakeup = latestDatapoint + resolutionMs + delay - DELAY_REDUCTION;
+
       this.pause();
       // TODO: clock.at
       setTimeout(() => this.resume(), (wakeup > now) ? wakeup - now : backoff);
@@ -242,7 +254,6 @@ export const multiplexMetricStreams = ({streams, clock}) => {
       
       // applied delay is 10% more than the largest input delay, plus 500ms
       const delay = _.max(inputs.map(i => i.delay)) * 1.1 + 500;
-      debug("applied delay is %ss", delay / 1000);
 
       // calculate the next vtime, and bail out if we're not ready yet, planning
       // to return when the time is right
@@ -254,7 +265,6 @@ export const multiplexMetricStreams = ({streams, clock}) => {
         break;
       }
 
-      debug("advancing vtime from %s to %s", vtime, nextTs);
       inputs.forEach(input => {
         if (input.datapoints[0] && input.datapoints[0].ts <= nextTs) {
           const dp = input.datapoints.shift();
