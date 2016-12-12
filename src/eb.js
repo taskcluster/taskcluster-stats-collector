@@ -69,8 +69,10 @@ exports.declare = ({name, description, requires, nines, days}) => {
       }
 
       // calculate the budget: 1.0 = never failed, 0.0 = failed more than the specified nines
-      const hoursExceeded = sum(history.map(h => h[1]));
-      const fractionExceeded = hoursExceeded / (days * 24);
+      // note that missing data is treated as zero here
+      const hoursMeasured = (now - history[0][0]) / HOUR;
+      const hoursMet = sum(history.map(h => h[1]));
+      const fractionExceeded = (hoursMeasured - hoursMet) / hoursMeasured;
       const maxFraction = (100 - nines) / 100;
       const budget = fractionExceeded > maxFraction ? 0 : 1 - fractionExceeded / maxFraction;
 
