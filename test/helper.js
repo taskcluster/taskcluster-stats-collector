@@ -162,10 +162,13 @@ export const makeCollector = async name => {
   fakes.listener = new EventEmitter();
   fakes.queue = new FakeQueue();
   fakes.clock = new FakeClock();
+  fakes.signalFxRest = new FakeSignalFxRest();
+  fakes.ingest = new FakeIngest();
 
   fakes.profile = 'test';
 
-  await load(`collector.${name}`, fakes);
+  // capture the context (`this`) for the collector
+  fakes.collector = await load(`collector.${name}`, fakes);
 
   return fakes;
 };

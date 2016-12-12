@@ -6,7 +6,6 @@ import {
   MetricStreamSource,
   MetricStreamSink,
   nextTick,
-  FakeIngest,
 } from './helper';
 import {
   signalFxMetricStream,
@@ -175,10 +174,6 @@ suite('metricstream', () => {
   });
 
   suite('signalFxIngester', () => {
-    beforeEach(() => {
-      fakes.ingest = new FakeIngest();
-    });
-
     test('throws an error on invalid types', () => {
       try {
         signalFxIngester({metric: 'foo.bar', type: 'knob', ingest: fakes.ingest});

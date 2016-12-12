@@ -109,7 +109,8 @@ class CollectorManager extends EventEmitter {
         setup: dependencies => {
           dependencies.debug = debug(options._fullname);
           dependencies.debug('setting up');
-          return options._setup.call(dependencies);
+          options._setup.call(dependencies);
+          return dependencies;
         },
       };
     });
