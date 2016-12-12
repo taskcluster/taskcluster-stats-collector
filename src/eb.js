@@ -65,7 +65,7 @@ exports.declare = ({name, description, requires, nines, days}) => {
 
       // remove old history
       while (history[0] && history[0][0] < earliest) {
-        history.unshift();
+        history.shift();
       }
 
       // calculate the budget: 1.0 = never failed, 0.0 = failed more than the specified nines
