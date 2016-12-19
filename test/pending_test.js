@@ -25,7 +25,7 @@ suite('collector.pending', () => {
     fakes.monitor.measures = {};
   };
 
-  beforeEach(async () => {
+  setup(async () => {
     fakes = await helper.makeCollector('pending');
   });
 
