@@ -56,6 +56,7 @@ class CollectorManager extends EventEmitter {
    *      'monitor',    // ..the TC-lib-monitor instance
    *      'listener',   // ..a TaskListener
    *    ],              // see main.js for the full set
+   *    testOnly,       // if true, collector is ignored for NODE_ENV=production
    * }
    *
    * The setup function is called with `this` bound to an object with props:
@@ -72,6 +73,11 @@ class CollectorManager extends EventEmitter {
     if (find(this.collectors, {name: options.name})) {
       throw new Error('Collector must have a unique name');
     }
+
+    if (options.testOnly && process.env.NODE_ENV === 'production') {
+      return;
+    }
+
     options._fullname = `collector.${options.name}`;
     options._setup = setup;
 

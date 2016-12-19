@@ -32,11 +32,12 @@ import {
  *  percentile: 95, resolution: '1h'}
  */
 
-exports.declare = ({name, description, requires, inputs, aggregate}) => {
+exports.declare = ({name, description, requires, inputs, aggregate, testOnly}) => {
   collectorManager.collector({
     name: `sli.${name}`,
     description,
     requires: ['monitor', 'clock', 'signalFxRest', 'ingest'].concat(requires || []),
+    testOnly,
   }, async function () {
     let inputSpecs;
     if (typeof inputs === 'function') {

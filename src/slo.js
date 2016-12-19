@@ -32,11 +32,12 @@ import {
  * }
  */
 
-exports.declare = ({name, description, requires, indicators}) => {
+exports.declare = ({name, description, requires, indicators, testOnly}) => {
   collectorManager.collector({
     name: `slo.${name}`,
     description,
     requires: ['monitor', 'clock', 'signalFxRest', 'ingest'].concat(requires || []),
+    testOnly,
   }, async function () {
     const inputSources = indicators.map(({sli, resolution}) => {
       const resolutionMs = RESOLUTIONS[resolution];
