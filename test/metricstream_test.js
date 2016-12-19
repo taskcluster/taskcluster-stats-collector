@@ -3,6 +3,7 @@ import debugModule from 'debug';
 import {
   FakeSignalFxRest,
   FakeClock,
+  FakeIngest,
   MetricStreamSource,
   MetricStreamSink,
   nextTick,
@@ -25,9 +26,9 @@ suite('metricstream', () => {
     fakes = {};
     fakes.signalFxRest = new FakeSignalFxRest();
     fakes.clock = new FakeClock();
+    fakes.ingest = new FakeIngest();
 
     sink = new MetricStreamSink(fakes.clock);
-
     source = new MetricStreamSource(fakes.clock);
   });
 
