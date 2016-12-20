@@ -48,6 +48,7 @@ export default class SignalFxRest {
     // multiple matching time series.. but no information about which time series
     // is which.
     const data = res.body.data;
+    console.log(`timeserieswindow returned ${JSON.stringify(data)}`);
     const keys = Object.keys(data);
     if (keys.length > 1) {
       throw new Error(`multiple time-series returned for query ${query}`);
