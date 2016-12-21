@@ -142,7 +142,7 @@ export const metricLoggerStream = ({prefix, log, clock}) => {
 };
 
 /**
- * A writeable stream that logs a metric stream directly to SignalFx.
+ * A through stream that logs a metric stream directly to SignalFx.
  *
  * options: {
  *   metric: // metric name
@@ -168,6 +168,17 @@ export const signalFxIngester = ({metric, type, ingest}) => {
       timestamp: chunk.ts,
     }];
     ingest.send(req);
+  });
+};
+
+/**
+ * A simple stream that sinks all data.  Use this to terminate a sequence
+ * of through streams.
+ */
+export const sinkStream = () => {
+  return new Writable({
+    objectMode: true,
+    write: (chunk, enc, next) => next(),
   });
 };
 

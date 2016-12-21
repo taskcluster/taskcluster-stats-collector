@@ -6,6 +6,7 @@ import {
   signalFxMetricStream,
   multiplexMetricStreams,
   metricLoggerStream,
+  sinkStream,
 } from './metricstream';
 
 /**
@@ -47,6 +48,15 @@ exports.declare = ({name, description, requires, inputs, aggregate}) => {
 
     const inputSources = inputSpecs.map(spec => sourceFromSpec(spec, this));
 
+    // add logs to each input
+    inputSources.forEach(src => {
+      src.stream = src.stream.pipe(metricLoggerStream({
+        prefix: `received from ${src.name}`,
+        log: msg => this.debug(msg),
+        clock: this.clock,
+      }));
+    });
+
     // multiplex those streams together
     const muxStream = multiplexMetricStreams({
       name: `sli.${name}.mux`,
@@ -67,21 +77,15 @@ exports.declare = ({name, description, requires, inputs, aggregate}) => {
       ingest: this.ingest,
     });
 
-    // and log it
+    // log it
     const logStream = metricLoggerStream({
       prefix: 'write datapoint',
       log: msg => this.debug(msg),
       clock: this.clock,
     });
 
-    // add logs to each input, too
-    inputSources.forEach(src => {
-      src.stream.pipe(metricLoggerStream({
-        prefix: `received from ${src.name}`,
-        log: msg => this.debug(msg),
-        clock: this.clock,
-      }));
-    });
+    // and sink it
+    const sink = sinkStream();
 
     // handle errors from any of those streams..
     const handleStreamError = ({stream, name}) => {
@@ -97,7 +101,7 @@ exports.declare = ({name, description, requires, inputs, aggregate}) => {
     handleStreamError({stream: logStream, name: 'logStream'});
 
     // and pipe them together
-    muxStream.pipe(aggregateStream).pipe(ingestStream).pipe(logStream);
+    muxStream.pipe(aggregateStream).pipe(ingestStream).pipe(logStream).pipe(sink);
   });
 };
 
