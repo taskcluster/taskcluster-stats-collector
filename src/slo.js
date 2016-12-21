@@ -68,6 +68,10 @@ exports.declare = ({name, description, requires, indicators, testOnly}) => {
 
     // transform it with the aggregate function
     const aggregateStream = sculpt.filter(dp => {
+      if (dp.hasOwnProperty('nowLive')) {
+        return dp;
+      }
+
       if (_.all(dp.value.map((value, i) => indicators[i].met(value)))) {
         // all objectives met -> SLO = 1
         dp.value = 1;
