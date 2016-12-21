@@ -7,6 +7,7 @@ import {
   signalFxIngester,
   multiplexMetricStreams,
   metricLoggerStream,
+  sinkStream,
 } from './metricstream';
 
 /**
@@ -47,7 +48,13 @@ exports.declare = ({name, description, requires, indicators}) => {
         start: this.clock.msec() - 2 * resolutionMs,
         clock: this.clock,
         signalFxRest: this.signalFxRest,
-      });
+      })
+      // log that input
+      .pipe(metricLoggerStream({
+        prefix: `received from ${sli}`,
+        log: msg => this.debug(msg),
+        clock: this.clock,
+      }));
       return {name: sli, stream};
     });
 
@@ -76,21 +83,15 @@ exports.declare = ({name, description, requires, indicators}) => {
       ingest: this.ingest,
     });
 
-    // and log it
+    // log it
     const logStream = metricLoggerStream({
       prefix: 'write datapoint',
       log: msg => this.debug(msg),
       clock: this.clock,
     });
 
-    // add logs to each input, too
-    inputSources.forEach(src => {
-      src.stream.pipe(metricLoggerStream({
-        prefix: `received from ${src.name}`,
-        log: msg => this.debug(msg),
-        clock: this.clock,
-      }));
-    });
+    // and sink it
+    const sink = sinkStream();
 
     // handle errors from any of those streams..
     const handleStreamError = ({stream, name}) => {
@@ -106,7 +107,7 @@ exports.declare = ({name, description, requires, indicators}) => {
     handleStreamError({stream: logStream, name: 'logStream'});
 
     // and pipe them together
-    muxStream.pipe(aggregateStream).pipe(ingestStream).pipe(logStream);
+    muxStream.pipe(aggregateStream).pipe(ingestStream).pipe(logStream).pipe(sink);
   });
 };
 

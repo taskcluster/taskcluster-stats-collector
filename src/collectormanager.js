@@ -106,10 +106,10 @@ class CollectorManager extends EventEmitter {
     this.collectors.forEach(options => {
       components[options._fullname] = {
         requires: options.requires,
-        setup: dependencies => {
+        setup: async dependencies => {
           dependencies.debug = debug(options._fullname);
           dependencies.debug('setting up');
-          options._setup.call(dependencies);
+          await options._setup.call(dependencies);
           return dependencies;
         },
       };
