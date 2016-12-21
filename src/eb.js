@@ -19,7 +19,7 @@ const DAY = 24 * HOUR;
  *  days: 14,           // the days over which to measure the percent
  * }
  */
-exports.declare = ({name, description, requires, nines, days}) => {
+exports.declare = ({name, description, requires, nines, days, testOnly}) => {
   // Time to delay after the top of an hour, to ensure that all datapoints are in.
   // SLIs can be delayed by 5 minutes, and SLOs by an additional 5, so wait 15.
   const DELAY = 15 * MINUTE;
@@ -28,6 +28,7 @@ exports.declare = ({name, description, requires, nines, days}) => {
     name: `eb.${name}`,
     description,
     requires: ['monitor', 'clock', 'signalFxRest', 'ingest'].concat(requires || []),
+    testOnly,
   }, function () {
     const history = [];
 

@@ -22,7 +22,7 @@ suite('metricstream', () => {
   let sink;
   let source;
 
-  beforeEach(async () => {
+  setup(async () => {
     fakes = {};
     fakes.signalFxRest = new FakeSignalFxRest();
     fakes.clock = new FakeClock();
@@ -219,7 +219,7 @@ suite('metricstream', () => {
       });
     };
 
-    beforeEach(() => {
+    setup(() => {
       sources = [
         {stream: new MetricStreamSource(fakes.clock), name: 'stream0'},
         {stream: new MetricStreamSource(fakes.clock), name: 'stream1'},

@@ -25,7 +25,7 @@ suite('collector.running', () => {
     fakes.monitor.counts = {};
   };
 
-  beforeEach(async () => {
+  setup(async () => {
     fakes = await helper.makeCollector('running');
   });
 

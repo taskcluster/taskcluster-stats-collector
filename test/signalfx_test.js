@@ -5,7 +5,7 @@ import SignalFxRest from '../lib/signalfx-rest';
 suite('SignalFxRest', () => {
   let rest;
 
-  before(async function () {
+  suiteSetup(async function () {
     const cfg = await load('cfg', {profile: 'test'});
     if (!cfg.signalfx.apiToken) {
       this.skip();
