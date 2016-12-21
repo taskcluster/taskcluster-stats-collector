@@ -49,7 +49,7 @@ suite('metricstream', () => {
       throw new Error('no exception');
     });
 
-    test('returns historical data, then emits "live"', async () => {
+    test('returns historical data, then "nowLive"', async () => {
       const start = fakes.clock.msec();
       await fakes.clock.tick(4 * HOUR);
 
@@ -69,16 +69,12 @@ suite('metricstream', () => {
         clock: fakes.clock,
         signalFxRest: fakes.signalFxRest,
       });
-      let live = false;
-      stream.on('live', () => live = true);
       stream.on('error', err => console.error(err, err.stack));
 
       stream.pipe(sink);
 
       // tick until it goes live
-      while (!live) {
-        await fakes.clock.tick(0);
-      }
+      await fakes.clock.tick(HOUR * 5);
 
       assume(sink.received).to.deeply.equal([
         {received: 1014400000, chunk: {ts: start + HOUR * 0,   value: 10, live: false}},
@@ -89,6 +85,7 @@ suite('metricstream', () => {
         {received: 1014400000, chunk: {ts: start + HOUR * 2.5, value: 35, live: false}},
         {received: 1014400000, chunk: {ts: start + HOUR * 3,   value: 10, live: false}},
         {received: 1014400000, chunk: {ts: start + HOUR * 3.5, value: 15, live: false}},
+        {received: 1014400000, chunk: {nowLive: true}},
       ]);
     });
 
@@ -122,8 +119,6 @@ suite('metricstream', () => {
         clock: fakes.clock,
         signalFxRest: fakes.signalFxRest,
       });
-      let live = false;
-      stream.on('live', () => live = true);
       stream.on('error', err => console.error(err, err.stack));
 
       stream.pipe(sink);
@@ -134,6 +129,8 @@ suite('metricstream', () => {
       const expected = [
         {received: start + HOUR * 1,
           chunk: {ts: start + HOUR * 0, value: 10, live: false}},
+        {received: start + HOUR * 1,
+          chunk: {nowLive: true}},
         {received: start + HOUR * 2 + 15000, // 15000ms is QUANTIZER_DELAY
           chunk: {ts: start + HOUR * 1, value: 15, live: true}},
         {received: start + HOUR * 2 + 15000,
@@ -153,6 +150,7 @@ suite('metricstream', () => {
       const logged = [];
       source.sendAt(1000000500, {ts: 1000000000, value: 1, live: false});
       source.sendAt(1000300400, {ts: 1000300000, value: 2, live: false});
+      source.sendAt(1000300400, {nowLive: true});
       source.sendAt(1000600450, {ts: 1000600000, value: 3, live: true});
       source
         .pipe(metricLoggerStream({prefix: 'pfx', log: (x) => logged.push(x), clock: fakes.clock}))
@@ -163,12 +161,14 @@ suite('metricstream', () => {
       assume(logged).to.deeply.equal([
         'pfx: ts=1000000000: 1 (historical)',
         'pfx: ts=1000300000: 2 (historical)',
+        'pfx: now live',
         'pfx: ts=1000600000: 3 (live, 0.45s delay)',
       ]);
 
       assume(sink.received).to.deeply.equal([
         {received: 1000000500, chunk: {ts: 1000000000, value: 1, live: false}},
         {received: 1000300400, chunk: {ts: 1000300000, value: 2, live: false}},
+        {received: 1000300400, chunk: {nowLive: true}},
         {received: 1000600450, chunk: {ts: 1000600000, value: 3, live: true}},
       ]);
     });
@@ -214,8 +214,8 @@ suite('metricstream', () => {
   suite('multiplexMetricStreams', () => {
     let sources;
     const setupSource = (src, sends) => {
-      sends.forEach(({at, ts, value, live}) => {
-        sources[src].stream.sendAt(at, {ts, value, live});
+      sends.forEach(({at, what}) => {
+        sources[src].stream.sendAt(at, what);
       });
     };
 
@@ -229,20 +229,23 @@ suite('metricstream', () => {
 
     test('multiplexes historical data, with missing values carried through from the last occurrence', async () => {
       setupSource(0, [
-        {at: 1000180000, ts: 1000000000, value: 1, live: false},
-        {at: 1000180000, ts: 1000060000, value: 2, live: false},
-        {at: 1000180000, ts: 1000120000, value: 3, live: false},
-        {at: 1000180000, ts: 1000180000, value: 4, live: true},
+        {at: 1000180000, what: {ts: 1000000000, value: 1, live: false}},
+        {at: 1000180000, what: {ts: 1000060000, value: 2, live: false}},
+        {at: 1000180000, what: {ts: 1000120000, value: 3, live: false}},
+        {at: 1000180000, what: {nowLive: true}},
+        {at: 1000180000, what: {ts: 1000180000, value: 4, live: true}},
       ]);
       setupSource(1, [
-        {at: 1000180000, ts: 1000060000, value: 22, live: false},
-        {at: 1000180000, ts: 1000180000, value: 24, live: true},
+        {at: 1000180000, what: {ts: 1000060000, value: 22, live: false}},
+        {at: 1000180000, what: {nowLive: true}},
+        {at: 1000180000, what: {ts: 1000180000, value: 24, live: true}},
       ]);
 
       setupSource(2, [
-        {at: 1000180000, ts: 1000060000, value: 32, live: false},
-        {at: 1000180000, ts: 1000120000, value: 33, live: false},
-        {at: 1000180000, ts: 1000180000, value: 34, live: true},
+        {at: 1000180000, what: {ts: 1000060000, value: 32, live: false}},
+        {at: 1000180000, what: {ts: 1000120000, value: 33, live: false}},
+        {at: 1000180000, what: {nowLive: true}},
+        {at: 1000180000, what: {ts: 1000180000, value: 34, live: true}},
       ]);
 
       multiplexMetricStreams({streams: sources, clock: fakes.clock})
@@ -255,6 +258,7 @@ suite('metricstream', () => {
         {received: 1000180000, chunk: {ts: 1000000000, value: [1, undefined, undefined], live: false}},
         {received: 1000180000, chunk: {ts: 1000060000, value: [2, 22, 32], live: false}},
         {received: 1000180000, chunk: {ts: 1000120000, value: [3, 22, 33], live: false}},
+        {received: 1000180000, chunk: {nowLive: true}},
         // note 500ms delay is applied to this live datapoint:
         {received: 1000180500, chunk: {ts: 1000180000, value: [4, 24, 34], live: true}},
       ]);
@@ -262,22 +266,25 @@ suite('metricstream', () => {
 
     test('delays live data consistently', async () => {
       setupSource(0, [ // 500ms delay
-        {at: 1000600500, ts: 1000600000, value: 11, live: true},
-        {at: 1001200500, ts: 1001200000, value: 12, live: true},
-        {at: 1001800500, ts: 1001800000, value: 13, live: true},
-        {at: 1002400500, ts: 1002400000, value: 14, live: true},
+        {at: 1000100000, what: {nowLive: true}},
+        {at: 1000600500, what: {ts: 1000600000, value: 11, live: true}},
+        {at: 1001200500, what: {ts: 1001200000, value: 12, live: true}},
+        {at: 1001800500, what: {ts: 1001800000, value: 13, live: true}},
+        {at: 1002400500, what: {ts: 1002400000, value: 14, live: true}},
       ]);
       setupSource(1, [ // 1500ms delay
-        {at: 1000601500, ts: 1000600000, value: 21, live: true},
-        {at: 1001201500, ts: 1001200000, value: 22, live: true},
-        {at: 1001801500, ts: 1001800000, value: 23, live: true},
-        {at: 1002401500, ts: 1002400000, value: 24, live: true},
+        {at: 1000100000, what: {nowLive: true}},
+        {at: 1000601500, what: {ts: 1000600000, value: 21, live: true}},
+        {at: 1001201500, what: {ts: 1001200000, value: 22, live: true}},
+        {at: 1001801500, what: {ts: 1001800000, value: 23, live: true}},
+        {at: 1002401500, what: {ts: 1002400000, value: 24, live: true}},
       ]);
       setupSource(2, [ // 2000ms delay
-        {at: 1000602000, ts: 1000600000, value: 31, live: true},
-        {at: 1001202000, ts: 1001200000, value: 32, live: true},
-        {at: 1001802000, ts: 1001800000, value: 33, live: true},
-        {at: 1002402000, ts: 1002400000, value: 34, live: true},
+        {at: 1000100000, what: {nowLive: true}},
+        {at: 1000602000, what: {ts: 1000600000, value: 31, live: true}},
+        {at: 1001202000, what: {ts: 1001200000, value: 32, live: true}},
+        {at: 1001802000, what: {ts: 1001800000, value: 33, live: true}},
+        {at: 1002402000, what: {ts: 1002400000, value: 34, live: true}},
       ]);
 
       multiplexMetricStreams({streams: sources, clock: fakes.clock})
@@ -288,6 +295,7 @@ suite('metricstream', () => {
 
       // applied delay is 2750 ms: 2000ms (max input delay) + 250ms (12.5%) + 500ms
       assume(sink.received).to.deeply.equal([
+        {received: 1000100000, chunk: {nowLive: true}},
         {received: 1000602750, chunk: {ts: 1000600000, value: [11, 21, 31], live: true}},
         {received: 1001202750, chunk: {ts: 1001200000, value: [12, 22, 32], live: true}},
         {received: 1001802750, chunk: {ts: 1001800000, value: [13, 23, 33], live: true}},
@@ -297,23 +305,23 @@ suite('metricstream', () => {
 
     test('starts when a stream goes live but never produces data', async () => {
       // source 0 never produces data, but does eventually go "live", meaning if it ever does
-      // produce data it will be live
-      fakes.clock.setTimeout('stream 0 goes live', () => {
-        sources[0].stream.live = true;
-        sources[0].stream.emit('live');
-      }, 1000602200 - fakes.clock.msec());
-
+      // produce data it will be live data
+      setupSource(0, [
+        {at: 1000602200, what: {nowLive: true}},
+      ]);
       setupSource(1, [ // 1500ms delay
-        {at: 1000601500, ts: 1000600000, value: 21, live: true},
-        {at: 1001201500, ts: 1001200000, value: 22, live: true},
-        {at: 1001801500, ts: 1001800000, value: 23, live: true},
-        {at: 1002401500, ts: 1002400000, value: 24, live: true},
+        {at: 1000100000, what: {nowLive: true}},
+        {at: 1000601500, what: {ts: 1000600000, value: 21, live: true}},
+        {at: 1001201500, what: {ts: 1001200000, value: 22, live: true}},
+        {at: 1001801500, what: {ts: 1001800000, value: 23, live: true}},
+        {at: 1002401500, what: {ts: 1002400000, value: 24, live: true}},
       ]);
       setupSource(2, [
-        {at: 1000600500, ts: 1000600000, value: 31, live: true},
-        {at: 1001200500, ts: 1001200000, value: 32, live: true},
-        {at: 1001800500, ts: 1001800000, value: 33, live: true},
-        {at: 1002400500, ts: 1002400000, value: 34, live: true},
+        {at: 1000100000, what: {nowLive: true}},
+        {at: 1000600500, what: {ts: 1000600000, value: 31, live: true}},
+        {at: 1001200500, what: {ts: 1001200000, value: 32, live: true}},
+        {at: 1001800500, what: {ts: 1001800000, value: 33, live: true}},
+        {at: 1002400500, what: {ts: 1002400000, value: 34, live: true}},
       ]);
 
       multiplexMetricStreams({streams: sources, clock: fakes.clock})
@@ -325,6 +333,7 @@ suite('metricstream', () => {
       assume(sink.received).to.deeply.equal([
         // for the first tick, the multiplexer is still thinking things aren't live..
         {received: 1000602200, chunk: {ts: 1000600000, value: [undefined, 21, 31], live: false}},
+        {received: 1000602200, chunk: {nowLive: true}},
         {received: 1001202187, chunk: {ts: 1001200000, value: [undefined, 22, 32], live: true}},
         {received: 1001802187, chunk: {ts: 1001800000, value: [undefined, 23, 33], live: true}},
         {received: 1002402187, chunk: {ts: 1002400000, value: [undefined, 24, 34], live: true}},
@@ -333,16 +342,19 @@ suite('metricstream', () => {
 
     test('skips missing datapoints', async () => {
       setupSource(0, [
-        {at: 1000600500, ts: 1000600000, value: 11, live: true},
-        {at: 1002400500, ts: 1002400000, value: 14, live: true},
+        {at: 1000600500, what: {ts: 1000600000, value: 11, live: false}},
+        {at: 1001801500, what: {nowLive: true}},
+        {at: 1002400500, what: {ts: 1002400000, value: 14, live: true}},
       ]);
       setupSource(1, [
-        {at: 1001801500, ts: 1001800000, value: 23, live: true},
-        {at: 1002401500, ts: 1002400000, value: 24, live: true},
+        {at: 1000100000, what: {nowLive: true}},
+        {at: 1001801500, what: {ts: 1001800000, value: 23, live: true}},
+        {at: 1002401500, what: {ts: 1002400000, value: 24, live: true}},
       ]);
       setupSource(2, [
-        {at: 1000602000, ts: 1000600000, value: 31, live: true},
-        {at: 1001802000, ts: 1001800000, value: 33, live: true},
+        {at: 1000100000, what: {nowLive: true}},
+        {at: 1000602000, what: {ts: 1000600000, value: 31, live: true}},
+        {at: 1001802000, what: {ts: 1001800000, value: 33, live: true}},
       ]);
 
       multiplexMetricStreams({streams: sources, clock: fakes.clock})
@@ -352,9 +364,8 @@ suite('metricstream', () => {
       await fakes.clock.tick(3000000);
 
       assume(sink.received).to.deeply.equal([
-        // note there are no datapoints at 120 seconds, so no output; furthermore, the stream
-        // is not live until 1001801500 when source 0 finally goes live
         {received: 1001801500, chunk: {ts: 1000600000, value: [11, undefined, 31], live: false}},
+        {received: 1001801500, chunk: {nowLive: true}},
         {received: 1001802750, chunk: {ts: 1001800000, value: [11, 23, 33], live: true}},
         {received: 1002402750, chunk: {ts: 1002400000, value: [14, 24, 33], live: true}},
       ]);
