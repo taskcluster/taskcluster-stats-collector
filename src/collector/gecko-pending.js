@@ -114,6 +114,6 @@ eb.declare({
     'Gecko pending times should be within their thresholds 99.5% of the time,',
     'measured over the previous two weeks.',
   ].join('\n'),
-  nines: 99.5,
-  days: 14,
+  nines: 95.0, // TEMPORARY
+  days: 1,  // TEMPORARY
 });
