@@ -41,7 +41,7 @@ export default class SignalFxRest {
     });
 
     if (res.statusCode != 200) {
-      throw new Error(`Error from signalfx: ${JSON.stringify(res.body)}`);
+      throw new Error(`Error from signalfx: HTTP ${res.statusCode}, ${JSON.stringify(res.body)}`);
     }
 
     // data is helpfully keyed by a random string, or more than one if there were
