@@ -19,16 +19,12 @@ const HOUR = 1000 * 60 * 60;
  *   live,    // true if this is a "live" datapoint (not historical)
  * }
  *
+ * or "live" notifications, {nowLive: true}, indicating that no more historical datapoints
+ * should be expected.
+ *
  * Note that "live" datapoints may still have a delay of a few seconds (that is,
- * `ts` may be a few seconds in the past) due to message propagation delays, polling,
+ * `ts` may be some time in the past) due to message propagation delays, polling,
  * etc.
- *
- * Metric streams emit a "live" event and set their `live` property true
- * after the last historical datapoint has been pushed into the stream.  Note
- * that events and stream data are not synchronized, so this event may arrive
- * before all buffered historical data is consumed.
- *
- * NOTE: the "through" streams here will not pass along the live event and property.
  */
 
 /**
@@ -77,8 +73,7 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
       // if we are up to the current time, then remaining samples will be "live"
       if (endMs === now) {
         if (!liveData) {
-          output.live = true;
-          output.emit('live');
+          output.emit('data', {nowLive: true});
         }
         liveData = true;
       }
@@ -113,7 +108,6 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
     // always pause, as this is a push (non-flowing) stream
     output.pause();
   }});
-  output.live = false;
 
   return output;
 };
@@ -132,10 +126,14 @@ export const metricLoggerStream = ({prefix, log, clock}) => {
   const _log = log || console.log;
   const msec = () => clock && clock.msec() || +new Date();
 
-  return sculpt.tap((chunk) =>
-    _log(`${_prefix}ts=${chunk.ts}: ${chunk.value} ` +
-         (chunk.live ? `(live, ${(msec() - chunk.ts) / 1000}s delay)` : '(historical)'))
-  );
+  return sculpt.tap((chunk) => {
+    if (chunk.hasOwnProperty('nowLive')) {
+      _log(`${_prefix}now live`);
+    } else {
+      _log(`${_prefix}ts=${chunk.ts}: ${chunk.value} ` +
+           (chunk.live ? `(live, ${(msec() - chunk.ts) / 1000}s delay)` : '(historical)'));
+    }
+  });
 };
 
 /**
@@ -158,6 +156,10 @@ export const signalFxIngester = ({metric, type, ingest}) => {
   }
 
   return sculpt.tap((chunk) => {
+    if (chunk.hasOwnProperty('nowLive')) {
+      return;
+    }
+
     const req = {};
     req[plurals[type]] = [{
       metric,
@@ -202,7 +204,7 @@ export const sinkStream = () => {
  *
  * The `streams` option is the array of input streams:
  * [
- *   {stream: <readable stream>, name: stream name},
+ *   {stream: <metric stream>, name: stream name},
  *   ...
  * ]
  */
@@ -213,7 +215,7 @@ export const multiplexMetricStreams = ({name, streams, clock}) => {
 
   // output is a readable stream, but with no read method (so, only operating in pull mode)
   const output = new Readable({objectMode: true, read: function () { this.pause(); }});
-  output.live = false;
+  let outputLive = false;
 
   const inputs = streams.map(({stream, name}) => {
     const input = {
@@ -223,20 +225,20 @@ export const multiplexMetricStreams = ({name, streams, clock}) => {
       _delays: [],
       delay: 1000, // starting guess
       value: undefined,
+      // true if we have seen the 'live' chunk from this input
+      streamLive: false,
       // true if we have *udpated to* a live datapoint, which may occur after
-      // we get the 'live' event from this input
+      // we get the 'live' chunk from this input
       live: false,
     };
 
-    stream.on('live', () => {
-      if (!warm && _.all(inputs, s => s.stream.live)) {
-        debug('warmed up: all input streams are now live');
-        warm = true;
-      }
-      update();
-    });
-
     stream.on('data', (chunk) => {
+      if (chunk.hasOwnProperty('nowLive')) {
+        input.streamLive = true;
+        update();
+        return;
+      }
+
       if (chunk.ts < vtime) {
         debug('discarding late datapoint %s at %s from stream %s',
             chunk.value, chunk.ts, name);
@@ -265,7 +267,12 @@ export const multiplexMetricStreams = ({name, streams, clock}) => {
   const update = clock.throttle(() => {
     // no updates at all until everything is warm
     if (!warm) {
-      return;
+      if (_.all(inputs, i => i.streamLive)) {
+        debug('warmed up: all input streams are now live');
+        warm = true;
+      } else {
+        return;
+      }
     }
 
     // update the output by advancing the virtual `vtime` to each successive
@@ -289,9 +296,9 @@ export const multiplexMetricStreams = ({name, streams, clock}) => {
 
         // we're now live, even if some inputs have yet to produce any live
         // datapoints
-        if (!output.live) {
-          output.emit('live');
-          output.live = true;
+        if (!outputLive) {
+          outputLive = true;
+          output.emit('data', {nowLive: true});
         }
         break;
       }
@@ -304,15 +311,13 @@ export const multiplexMetricStreams = ({name, streams, clock}) => {
         }
       });
 
-      let live = output.live;
-      if (!live) {
-        live = _.all(inputs.map(i => i.live));
-        if (live) {
-          output.live = true;
-          output.emit('live');
+      if (!outputLive) {
+        outputLive = _.all(inputs.map(i => i.live));
+        if (outputLive) {
+          output.emit('data', {nowLive: true});
         }
       }
-      output.emit('data', {ts: nextTs, value: inputs.map(i => i.latest), live});
+      output.emit('data', {ts: nextTs, value: inputs.map(i => i.latest), live: outputLive});
       vtime = nextTs;
     }
 
