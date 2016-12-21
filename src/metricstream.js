@@ -54,7 +54,6 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
   }
 
   let output;
-  let DBG = debugModule(`sFMS.${query}`);
   const fetch = () => {
     (async function () {
       const now = clock.msec();
@@ -62,13 +61,11 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
       let startMs = latestDatapoint;
       let endMs = now;
 
-      DBG(`call timeserieswindow with ${startMs} ${endMs} ${resolutionMs}`);
       (await signalFxRest.timeserieswindow({
         query: query,
         startMs, endMs,
         resolution: resolutionMs,
       })).forEach(dp => {
-        DBG(`got ${JSON.stringify(dp)}`);
         // skip if we've seen this datapoint before
         if (dp[0] <= latestDatapoint) {
           return;
