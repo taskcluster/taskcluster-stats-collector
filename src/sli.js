@@ -6,6 +6,7 @@ import {
   signalFxMetricStream,
   multiplexMetricStreams,
   metricLoggerStream,
+  aggregateMetricStream,
   sinkStream,
 } from './metricstream';
 
@@ -66,9 +67,8 @@ exports.declare = ({name, description, requires, inputs, aggregate, testOnly}) =
     });
 
     // transform it with the aggregate function
-    const aggregateStream = sculpt.filter(dp => {
-      dp.value = aggregate.call(this, dp.value);
-      return dp;
+    const aggregateStream = aggregateMetricStream({
+      aggregate: values => aggregate.call(this, values),
     });
 
     // ingest the result

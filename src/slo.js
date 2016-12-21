@@ -7,6 +7,7 @@ import {
   signalFxIngester,
   multiplexMetricStreams,
   metricLoggerStream,
+  aggregateMetricStream,
   sinkStream,
 } from './metricstream';
 
@@ -67,18 +68,14 @@ exports.declare = ({name, description, requires, indicators, testOnly}) => {
     });
 
     // transform it with the aggregate function
-    const aggregateStream = sculpt.filter(dp => {
-      if (dp.hasOwnProperty('nowLive')) {
-        return dp;
-      }
-
-      if (_.all(dp.value.map((value, i) => indicators[i].met(value)))) {
-        // all objectives met -> SLO = 1
-        dp.value = 1;
-      } else {
-        dp.value = 0;
-      }
-      return dp;
+    const aggregateStream = aggregateMetricStream({
+      aggregate: values => {
+        if (_.all(values.map((value, i) => indicators[i].met(value)))) {
+          // all objectives met -> SLO = 1
+          return 1;
+        }
+        return 0;
+      },
     });
 
     // ingest the result

@@ -325,3 +325,20 @@ export const multiplexMetricStreams = ({name, streams, clock}) => {
 
   return output;
 };
+
+/**
+ * Aggregate a multiplexed metric stream down to a single value. This is generally
+ * installed after a multiplexMetricStream.
+ *
+ * The `aggregate` option is called with the array of values, and should return
+ * a single value
+ *
+ */
+export const aggregateMetricStream = ({aggregate}) => {
+  return sculpt.filter(dp => {
+    if (!dp.hasOwnProperty('nowLive')) {
+      dp.value = aggregate(dp.value);
+    }
+    return dp;
+  });
+};
