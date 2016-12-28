@@ -1,9 +1,15 @@
-import {max} from 'lodash';
+import {max, filter} from 'lodash';
+import taskcluster from 'taskcluster-client';
 import sli from '../sli';
 import slo from '../slo';
 import eb from '../eb';
 
 const MINUTE = 60 * 1000;
+
+const getAwsWorkerTypes = async () => {
+  const prov = new taskcluster.AwsProvisioner();
+  return await prov.listWorkerTypes();
+};
 
 sli.declare({
   name: 'gecko.pending.test',
@@ -13,26 +19,19 @@ sli.declare({
     'Each workerType is measured at the 95th percentile over a 5-minute',
     'period to avoid outliers.',
   ].join('\n'),
-  // TODO: determine these dynamically from the AWS provisioner
-  inputs: [
-    'desktop-test',
-    'desktop-test-large',
-    'desktop-test-xlarge',
-    'gecko-t-linux-medium',
-    'gecko-t-linux-large',
-    'gecko-t-linux-xlarge',
-    'gecko-t-win10-64',
-    'gecko-t-win10-64-gpu',
-    'gecko-t-win7-32',
-    'gecko-t-win7-32-gpu',
-  ].map(wt => {
-    return {
-      spec: 'statsum',
-      metric: `tc-stats-collector.tasks.aws-provisioner-v1.${wt}.pending`,
-      resolution: '5m',
-      percentile: 95,
-    };
-  }),
+  inputs: async () => {
+    const workerTypes = filter(await getAwsWorkerTypes(), workerType =>
+        // old workerTypes are 'desktop-test*', but we still monitor those
+        workerType.startsWith('desktop-test') || workerType.startsWith('gecko-t-'));
+    return workerTypes.map(wt => {
+      return {
+        spec: 'statsum',
+        metric: `tc-stats-collector.tasks.aws-provisioner-v1.${wt}.pending`,
+        resolution: '5m',
+        percentile: 95,
+      };
+    });
+  },
   aggregate: max,
 });
 
@@ -44,29 +43,18 @@ sli.declare({
     'Each workerType is measured at the 95th percentile over a 5-minute',
     'period to avoid outliers.',
   ].join('\n'),
-  // TODO: determine these dynamically from the AWS provisioner
-  inputs: [
-    'gecko-1-b-android',
-    'gecko-1-b-linux',
-    'gecko-1-b-macosx64',
-    'gecko-1-b-win2012',
-    'gecko-1-b-win2012-beta',
-    'gecko-2-b-android',
-    'gecko-2-b-linux',
-    'gecko-2-b-macosx64',
-    'gecko-2-b-win2012',
-    'gecko-3-b-android',
-    'gecko-3-b-linux',
-    'gecko-3-b-macosx64',
-    'gecko-3-b-win2012',
-  ].map(wt => {
-    return {
-      spec: 'statsum',
-      metric: `tc-stats-collector.tasks.aws-provisioner-v1.${wt}.pending`,
-      resolution: '5m',
-      percentile: 95,
-    };
-  }),
+  inputs: async () => {
+    const workerTypes = filter(await getAwsWorkerTypes(),
+        workerType => /^gecko-[123]-b-/.test(workerType));
+    return workerTypes.map(wt => {
+      return {
+        spec: 'statsum',
+        metric: `tc-stats-collector.tasks.aws-provisioner-v1.${wt}.pending`,
+        resolution: '5m',
+        percentile: 95,
+      };
+    });
+  },
   aggregate: max,
 });
 
@@ -79,18 +67,19 @@ sli.declare({
     'Each workerType is measured at the 95th percentile over a 5-minute',
     'period to avoid outliers.',
   ].join('\n'),
-  // TODO: determine these dynamically from the AWS provisioner
-  inputs: [
-    'gecko-decision',
-    'taskcluster-images',
-  ].map(wt => {
-    return {
-      spec: 'statsum',
-      metric: `tc-stats-collector.tasks.aws-provisioner-v1.${wt}.pending`,
-      resolution: '5m',
-      percentile: 95,
-    };
-  }),
+  inputs: async () => {
+    const workerTypes = filter(await getAwsWorkerTypes(), workerType =>
+        workerType.startsWith('gecko-') && !/^gecko-(t|[123]-b)-/.test(workerType));
+    workerTypes.push('taskcluster-images'); // bug 1320328
+    return workerTypes.map(wt => {
+      return {
+        spec: 'statsum',
+        metric: `tc-stats-collector.tasks.aws-provisioner-v1.${wt}.pending`,
+        resolution: '5m',
+        percentile: 95,
+      };
+    });
+  },
   aggregate: max,
 });
 
