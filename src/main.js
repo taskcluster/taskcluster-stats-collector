@@ -6,6 +6,7 @@ let config = require('typed-env-config');
 let collectorManager = require('./collectormanager');
 let taskcluster = require('taskcluster-client');
 let signalfx = require('signalfx');
+let debugModule = require('debug');
 import Clock from './clock';
 import SignalFxRest from './signalfx-rest';
 import yargs from 'yargs';
@@ -53,7 +54,18 @@ let load = loader(Object.assign({
 
   ingest: {
     requires: ['cfg'],
-    setup: ({cfg}) => new signalfx.Ingest(cfg.signalfx.apiToken),
+    setup: ({cfg}) => {
+      if (process.env.NODE_ENV !== 'production') {
+        const fakeIngest = {};
+        const debug = debugModule('signalfx-ingest');
+        fakeIngest.send = req => {
+          debug(JSON.stringify(req));
+        }
+        return fakeIngest;
+      } else {
+        return new signalfx.Ingest(cfg.signalfx.apiToken);
+      }
+    },
   },
 
   signalFxRest: {
