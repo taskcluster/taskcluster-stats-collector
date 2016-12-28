@@ -4,6 +4,9 @@
 
 Manages statistics collection for the TaskCluster team.
 
+This tool is specific to the needs and expectations of TaskCluster as deployed at Mozilla, and embeds lots of assumptions into the code.
+It is probably not useful outside that context.
+
 # Data Collected
 
 Data are collected by "collectors"
@@ -40,6 +43,23 @@ failures force dependant services to handle failures correctly.
 
 See the Google "Site Reliability Engineering" book for additional information
 on service levels.
+
+The service-level metrics available are:
+
+ * `sli.gecko.pending.build` - pending time for gecko-related build workerTypes
+   (95th percentile over 5 minutes)
+
+ * `sli.gecko.pending.test` - pending time for gecko-related test workerTypes
+   (95th percentile over 5 minutes)
+
+ * `sli.gecko.pending.other` - pending time for gecko-related other
+   workerTypes, including decision tasks and image generation (95th percentile
+   over 5 minutes)
+
+ * `slo.gecko.pending` - thresholds for `sli.gecko.pending.*` (see the source
+   for threshold values)
+
+ * `eb.gecko.pending` - error budget for `slo.gecko.pending`.
 
 # Running locally
 
