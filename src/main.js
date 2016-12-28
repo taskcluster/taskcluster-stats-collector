@@ -60,7 +60,7 @@ let load = loader(Object.assign({
         const debug = debugModule('signalfx-ingest');
         fakeIngest.send = req => {
           debug(JSON.stringify(req));
-        }
+        };
         return fakeIngest;
       } else {
         return new signalfx.Ingest(cfg.signalfx.apiToken);
