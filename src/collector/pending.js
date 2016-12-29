@@ -80,8 +80,6 @@ collectorManager.collector({
     for (let workerType of Object.keys(readyWorkerTypes)) {
       let {taskKey, scheduled} = earliest(workerType, now);
       let waiting = taskKey ? now - scheduled : 0;
-      let oldWorkerType = workerType.split('.')[1];
-      this.monitor.measure(`tasks.${oldWorkerType}.pending`, waiting); // old measure
       this.monitor.measure(`tasks.${workerType}.pending`, waiting);
     }
   };
