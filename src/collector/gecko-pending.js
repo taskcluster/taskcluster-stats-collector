@@ -22,7 +22,9 @@ sli.declare({
   inputs: async () => {
     const workerTypes = filter(await getAwsWorkerTypes(), workerType =>
         // old workerTypes are 'desktop-test*', but we still monitor those
-        workerType.startsWith('desktop-test') || workerType.startsWith('gecko-t-'));
+        workerType.startsWith('desktop-test') || (
+          // exclude *-alpha, *-beta as those are just for testing and may be delayed
+          workerType.startsWith('gecko-t-') && !/-(alpha|beta)$/.test(workerType)));
     return workerTypes.map(wt => {
       return {
         spec: 'statsum',
