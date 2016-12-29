@@ -41,7 +41,7 @@ collectorManager.collector({
   const readyWorkerTypes = {};
 
   // update the state based on a task message
-  const update = (workerType, taskKey, isPending, scheduled) => {
+  const update = (workerType, taskKey, isPending, scheduled, started) => {
     let workerTypeState = pendingTasks[workerType];
 
     if (!workerTypeState) {
@@ -59,6 +59,12 @@ collectorManager.collector({
         // workerType (this isn't entirely valid, but close enough)
         readyWorkerTypes[workerType] = true;
         delete workerTypeState[taskKey];
+      } else if (!readyWorkerTypes[workerType]) {
+        // we don't yet have enough history to calculate pending times for
+        // currently-pending tasks, so use the total pending time of this
+        // task that just stopped pending to get some data in the interim
+        const waiting = new Date(started).getTime() - new Date(scheduled).getTime();
+        this.monitor.measure(`tasks.${workerType}.pending`, waiting);
       }
     }
   };
@@ -118,8 +124,9 @@ collectorManager.collector({
       let workerType = `${payload.status.provisionerId}.${payload.status.workerType}`;
       let isPending = action === 'task-pending';
       let scheduled = payload.status.runs[payload.runId].scheduled;
+      let started = payload.status.runs[payload.runId].started;
 
-      update(workerType, taskKey, isPending, scheduled);
+      update(workerType, taskKey, isPending, scheduled, started);
     } catch (err) {
       this.debug('Failed to process message %s with error: %s, as JSON: %j',
             action, err, err, err.stack);
