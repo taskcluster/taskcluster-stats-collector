@@ -41,7 +41,9 @@ export default class SignalFxRest {
     });
 
     if (res.statusCode != 200) {
-      throw new Error(`Error from signalfx: HTTP ${res.statusCode}, ${JSON.stringify(res.body)}`);
+      const err = new Error(`Error from signalfx: HTTP ${res.statusCode}, ${JSON.stringify(res.body)}`);
+      err.statusCode = res.statusCode;
+      throw err;
     }
 
     // data is helpfully keyed by a random string, or more than one if there were
