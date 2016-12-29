@@ -57,18 +57,25 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
       let startMs = latestDatapoint;
       let endMs = now;
 
-      (await signalFxRest.timeserieswindow({
-        query: query,
-        startMs, endMs,
-        resolution: resolutionMs,
-      })).forEach(dp => {
-        // skip if we've seen this datapoint before
-        if (dp[0] <= latestDatapoint) {
-          return;
+      try {
+        (await signalFxRest.timeserieswindow({
+          query: query,
+          startMs, endMs,
+          resolution: resolutionMs,
+        })).forEach(dp => {
+          // skip if we've seen this datapoint before
+          if (dp[0] <= latestDatapoint) {
+            return;
+          }
+          latestDatapoint = dp[0];
+          output.emit('data', {ts: dp[0], value: dp[1], live: liveData});
+        });
+      } catch (err) {
+        // treat 404's as an empty response
+        if (err.statusCode !== 404) {
+          throw err;
         }
-        latestDatapoint = dp[0];
-        output.emit('data', {ts: dp[0], value: dp[1], live: liveData});
-      });
+      }
 
       // if we are up to the current time, then remaining samples will be "live"
       if (endMs === now) {
