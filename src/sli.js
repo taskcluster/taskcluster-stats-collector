@@ -48,9 +48,19 @@ exports.declare = ({name, description, requires, inputs, aggregate, testOnly}) =
       inputSpecs = inputs;
     }
 
+    inputSpecs.forEach(spec => this.debug(`input: ${JSON.stringify(spec)}`));
+
     const inputSources = inputSpecs.map(spec => sourceFromSpec(spec, this));
 
+    const handleStreamError = ({stream, name}) => {
+      stream.on('error', err => {
+        this.monitor.reportError(err);
+        this.debug(`error from stream ${name}: ${err}`);
+      });
+    };
+
     // add logs to each input
+    inputSources.forEach(handleStreamError);
     inputSources.forEach(src => {
       src.stream = src.stream.pipe(metricLoggerStream({
         prefix: `received from ${src.name}`,
@@ -58,6 +68,7 @@ exports.declare = ({name, description, requires, inputs, aggregate, testOnly}) =
         clock: this.clock,
       }));
     });
+    inputSources.forEach(handleStreamError);
 
     // multiplex those streams together
     const muxStream = multiplexMetricStreams({
@@ -89,13 +100,6 @@ exports.declare = ({name, description, requires, inputs, aggregate, testOnly}) =
     const sink = sinkStream();
 
     // handle errors from any of those streams..
-    const handleStreamError = ({stream, name}) => {
-      stream.on('error', err => {
-        this.monitor.reportError(err);
-        this.debug(`error from stream ${name}: ${err}`);
-      });
-    };
-    inputSources.forEach(handleStreamError);
     handleStreamError({stream: muxStream, name: 'muxStream'});
     handleStreamError({stream: aggregateStream, name: 'aggregateStream'});
     handleStreamError({stream: ingestStream, name: 'ingestStream'});
