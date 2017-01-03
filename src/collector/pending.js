@@ -12,6 +12,18 @@ const CHECK_INTERVAL = 120; // seconds
 // thresholds for pending tasks.
 const MIN_CHECK_AGE = 300; // seconds
 
+// workerTypes that are not to be found in the AWS provisioner
+const NONPROVISIONED_WORKERTYPES = [
+  'buildbot-bridge.buildbot-bridge',
+  'null-provisioner.buildbot', // mozharness uploads from buildbot
+  'null-provisioner.buildbot-try', // mozharness uploads from buildbot in try
+  'scriptworker-prov-v1.balrogworker-v1',
+  'scriptworker-prov-v1.beetmoverworker-v1',
+  'scriptworker-prov-v1.pushapk-v1',
+  'scriptworker-prov-v1.signing-linux-v1',
+  'signing-provisioner-v1.signing-worker-v1',
+];
+
 // useless test provisioners
 const IGNORE_PROVISIONERS = [
   'test-provisioner',
@@ -27,7 +39,14 @@ collectorManager.collector({
   name: 'pending',
   requires: ['monitor', 'listener', 'queue', 'clock'],
   // support emitting via statsum or directly as a time series
-}, function () {
+}, async function () {
+
+  // calculate all workerTypes of interest
+  let allWorkerTypes = NONPROVISIONED_WORKERTYPES.slice();
+  const prov = new taskcluster.AwsProvisioner();
+  await prov.listWorkerTypes().foreach(wt => {
+    allWorkerTypes.push(`aws-provisioner-v1.${wt}`);
+  })
 
   // mappings from task key to pending time, keyed by workerType; an empty list
   // here is significant in that it means there is nothing pending for that
