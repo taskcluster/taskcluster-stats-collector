@@ -44,13 +44,11 @@ collectorManager.collector({
   // calculate all workerTypes of interest
   let allWorkerTypes = NONPROVISIONED_WORKERTYPES.slice();
   const prov = new taskcluster.AwsProvisioner();
-  await prov.listWorkerTypes().foreach(wt => {
+  (await prov.listWorkerTypes()).forEach(wt => {
     allWorkerTypes.push(`aws-provisioner-v1.${wt}`);
   })
 
-  // mappings from task key to pending time, keyed by workerType; an empty list
-  // here is significant in that it means there is nothing pending for that
-  // workerType
+  // mappings from task key to pending time, keyed by workerType
   const pendingTasks = {};
 
   // workerTypes for which we have seen a single task both enter and exit the
@@ -109,12 +107,14 @@ collectorManager.collector({
     }
   };
 
-  // For each worker type with a task we think is pending for over MIN_CHECK_AGE,
-  // poll the status of that task and, if it is actually not pending, remove it
-  // from the list.  This provides a way to catch cases where the service misses
-  // a pulse message or they are delivered out of order.
-  const check = (now) => {
-    return Promise.all(Object.keys(pendingTasks).map(async (workerType) => {
+  // perform some periodic checks to avoid inaccurate data from missed pulse
+  // messages, infrequently-used workerTypes, or other weird behavior.
+  const check = async (now) => {
+    // For each worker type with a task we think is pending for over MIN_CHECK_AGE,
+    // poll the status of that task and, if it is actually not pending, remove it
+    // from the list.  This provides a way to catch cases where the service misses
+    // a pulse message or they are delivered out of order.
+    await Promise.all(Object.keys(pendingTasks).map(async (workerType) => {
       // repeatedly find the longest-pending task and verify it against the
       // queue, until we find one that actually is pending.
       while (1) {
