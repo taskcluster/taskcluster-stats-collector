@@ -12,6 +12,18 @@ const CHECK_INTERVAL = 120; // seconds
 // thresholds for pending tasks.
 const MIN_CHECK_AGE = 300; // seconds
 
+// workerTypes that are not to be found in the AWS provisioner
+const NONPROVISIONED_WORKERTYPES = [
+  'buildbot-bridge.buildbot-bridge',
+  'null-provisioner.buildbot', // mozharness uploads from buildbot
+  'null-provisioner.buildbot-try', // mozharness uploads from buildbot in try
+  'scriptworker-prov-v1.balrogworker-v1',
+  'scriptworker-prov-v1.beetmoverworker-v1',
+  'scriptworker-prov-v1.pushapk-v1',
+  'scriptworker-prov-v1.signing-linux-v1',
+  'signing-provisioner-v1.signing-worker-v1',
+];
+
 // useless test provisioners
 const IGNORE_PROVISIONERS = [
   'test-provisioner',
@@ -27,11 +39,16 @@ collectorManager.collector({
   name: 'pending',
   requires: ['monitor', 'listener', 'queue', 'clock'],
   // support emitting via statsum or directly as a time series
-}, function () {
+}, async function () {
 
-  // mappings from task key to pending time, keyed by workerType; an empty list
-  // here is significant in that it means there is nothing pending for that
-  // workerType
+  // calculate all workerTypes of interest
+  let allWorkerTypes = NONPROVISIONED_WORKERTYPES.slice();
+  const prov = new taskcluster.AwsProvisioner();
+  (await prov.listWorkerTypes()).forEach(wt => {
+    allWorkerTypes.push(`aws-provisioner-v1.${wt}`);
+  })
+
+  // mappings from task key to pending time, keyed by workerType
   const pendingTasks = {};
 
   // workerTypes for which we have seen a single task both enter and exit the
@@ -41,7 +58,7 @@ collectorManager.collector({
   const readyWorkerTypes = {};
 
   // update the state based on a task message
-  const update = (workerType, taskKey, isPending, scheduled) => {
+  const update = (workerType, taskKey, isPending, scheduled, started) => {
     let workerTypeState = pendingTasks[workerType];
 
     if (!workerTypeState) {
@@ -59,6 +76,12 @@ collectorManager.collector({
         // workerType (this isn't entirely valid, but close enough)
         readyWorkerTypes[workerType] = true;
         delete workerTypeState[taskKey];
+      } else if (!readyWorkerTypes[workerType]) {
+        // we don't yet have enough history to calculate pending times for
+        // currently-pending tasks, so use the total pending time of this
+        // task that just stopped pending to get some data in the interim
+        const waiting = new Date(started).getTime() - new Date(scheduled).getTime();
+        this.monitor.measure(`tasks.${workerType}.pending`, waiting);
       }
     }
   };
@@ -75,7 +98,8 @@ collectorManager.collector({
     }, {taskKey: null, scheduled: now});
   };
 
-  // update monitors based on the current state
+  // update monitors based on the current state, for worker types that are ready
+  // for reporting (for which we have a good idea of the total queue)
   const flush = (now) => {
     for (let workerType of Object.keys(readyWorkerTypes)) {
       let {taskKey, scheduled} = earliest(workerType, now);
@@ -84,12 +108,14 @@ collectorManager.collector({
     }
   };
 
-  // For each worker type with a task we think is pending for over MIN_CHECK_AGE,
-  // poll the status of that task and, if it is actually not pending, remove it
-  // from the list.  This provides a way to catch cases where the service misses
-  // a pulse message or they are delivered out of order.
-  const check = (now) => {
-    return Promise.all(Object.keys(pendingTasks).map(async (workerType) => {
+  // perform some periodic checks to avoid inaccurate data from missed pulse
+  // messages, infrequently-used workerTypes, or other weird behavior.
+  const check = async (now) => {
+    // For each worker type with a task we think is pending for over MIN_CHECK_AGE,
+    // poll the status of that task and, if it is actually not pending, remove it
+    // from the list.  This provides a way to catch cases where the service misses
+    // a pulse message or they are delivered out of order.
+    await Promise.all(Object.keys(pendingTasks).map(async (workerType) => {
       // repeatedly find the longest-pending task and verify it against the
       // queue, until we find one that actually is pending.
       while (1) {
@@ -106,6 +132,19 @@ collectorManager.collector({
         break;
       }
     }));
+
+    // For all workerTypes that haven't yet seen a pulse message, check their
+    // pending count.  If there are zero tasks pending, then set pendingTasks[wt]
+    // to {} to indicate that nothing is pending.
+    let pending = new Set(Object.keys(pendingTasks));
+    await Promise.all(allWorkerTypes.filter(wt => !pending.has(wt)).map(async wt => {
+      let workerType = wt.split('.');
+      let pending = (await this.queue.pendingTasks(workerType[0], workerType[1])).pendingTasks;
+      if (pending === 0) {
+        this.debug(`queue says workerType ${wt} has no pending tasks, so assuming pending = 0`);
+        pendingTasks[wt] = {};
+      }
+    }));
   };
 
   this.listener.on('task-message', ({action, payload}) => {
@@ -118,8 +157,9 @@ collectorManager.collector({
       let workerType = `${payload.status.provisionerId}.${payload.status.workerType}`;
       let isPending = action === 'task-pending';
       let scheduled = payload.status.runs[payload.runId].scheduled;
+      let started = payload.status.runs[payload.runId].started;
 
-      update(workerType, taskKey, isPending, scheduled);
+      update(workerType, taskKey, isPending, scheduled, started);
     } catch (err) {
       this.debug('Failed to process message %s with error: %s, as JSON: %j',
             action, err, err, err.stack);

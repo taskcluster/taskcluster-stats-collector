@@ -3,7 +3,7 @@ suite('collector.pending', () => {
   let helper = require('./helper');
   let fakes;
 
-  let fakeTaskChange = ({state, scheduled, taskId}) => {
+  let fakeTaskChange = ({state, scheduled, started, taskId}) => {
     fakes.listener.emit('task-message', {
       action: `task-${state}`,
       payload: {
@@ -12,7 +12,10 @@ suite('collector.pending', () => {
           provisionerId: 'prov',
           workerType: 'wt',
           runs: [
-            {scheduled: new Date(scheduled || fakes.clock.msec() - 1000)},
+            {
+              scheduled: new Date(scheduled || fakes.clock.msec() - 1000),
+              started: started ? new Date(started) : undefined,
+            },
           ],
         },
         runId: 0,
@@ -34,19 +37,32 @@ suite('collector.pending', () => {
     assertMeasures({});
   });
 
-  test('at startup, unpaired task runs are ignored', async () => {
-    fakeTaskChange({state: 'running', taskId: 't1'});
-    fakeTaskChange({state: 'running', taskId: 't2'});
-    await fakes.clock.tick(600000);
-    assertMeasures({});
+  test('at startup, unpaired task runs are measured, but that stops once a pair is seen', async () => {
+    fakeTaskChange({state: 'running', taskId: 't1', scheduled: fakes.clock.msec() - 7000,
+      started: fakes.clock.msec()});
+    fakeTaskChange({state: 'pending', taskId: 't3', scheduled: fakes.clock.msec()});
+    await fakes.clock.tick(10000);
+    fakeTaskChange({state: 'running', taskId: 't2', scheduled: fakes.clock.msec() - 8000, 
+      started: fakes.clock.msec()});
+    await fakes.clock.tick(1000);
+    fakeTaskChange({state: 'running', taskId: 't3', scheduled: fakes.clock.msec() - 11000, 
+      started: fakes.clock.msec()});
+    await fakes.clock.tick(1000);
+    fakeTaskChange({state: 'running', taskId: 't4', scheduled: fakes.clock.msec() - 9000, 
+      started: fakes.clock.msec()});
+    await fakes.clock.tick(1000);
+    assertMeasures({
+      // note that t4 is not represented here
+      'tasks.prov.wt.pending': [7000, 8000],
+    });
   });
 
   test('at startup, unpaired pending tasks are ignored', async () => {
     fakes.queue.setStatus('t1', 'pending');
-    fakeTaskChange({state: 'pending', taskId: 't1'});
+    fakeTaskChange({state: 'pending', taskId: 't1', scheduled: 1000});
     await fakes.clock.tick(1000);
     fakes.queue.setStatus('t2', 'pending');
-    fakeTaskChange({state: 'pending', taskId: 't2'});
+    fakeTaskChange({state: 'pending', taskId: 't2', scheduled: 2000});
     await fakes.clock.tick(600000);
     assertMeasures({});
   });

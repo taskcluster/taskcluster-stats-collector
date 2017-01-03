@@ -8,6 +8,7 @@ import {Writable, Readable} from 'stream';
 export class FakeQueue {
   constructor () {
     this.statuses = {};
+    this.pendingCounts = {};
   }
 
   setStatus (taskId, runStates) {
@@ -20,6 +21,10 @@ export class FakeQueue {
         runs: runStates.map(state => { return {state}; }),
       },
     };
+  }
+
+  async pendingTasks (provisionerId, workerType) {
+    return this.pendingCounts[`${provisionerId}.${workerType}`] || 0;
   }
 
   async status (taskId) {
