@@ -98,7 +98,8 @@ collectorManager.collector({
     }, {taskKey: null, scheduled: now});
   };
 
-  // update monitors based on the current state
+  // update monitors based on the current state, for worker types that are ready
+  // for reporting (for which we have a good idea of the total queue)
   const flush = (now) => {
     for (let workerType of Object.keys(readyWorkerTypes)) {
       let {taskKey, scheduled} = earliest(workerType, now);
@@ -129,6 +130,19 @@ collectorManager.collector({
           }
         }
         break;
+      }
+    }));
+
+    // For all workerTypes that haven't yet seen a pulse message, check their
+    // pending count.  If there are zero tasks pending, then set pendingTasks[wt]
+    // to {} to indicate that nothing is pending.
+    let pending = new Set(Object.keys(pendingTasks));
+    await Promise.all(allWorkerTypes.filter(wt => !pending.has(wt)).map(async wt => {
+      let workerType = wt.split('.');
+      let pending = (await this.queue.pendingTasks(workerType[0], workerType[1])).pendingTasks;
+      if (pending === 0) {
+        this.debug(`queue says workerType ${wt} has no pending tasks, so assuming pending = 0`);
+        pendingTasks[wt] = {};
       }
     }));
   };
