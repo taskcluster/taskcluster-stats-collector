@@ -143,6 +143,7 @@ collectorManager.collector({
       if (pending === 0) {
         this.debug(`queue says workerType ${wt} has no pending tasks, so assuming pending = 0`);
         pendingTasks[wt] = {};
+        readyWorkerTypes[wt] = true;
       }
     }));
   };
