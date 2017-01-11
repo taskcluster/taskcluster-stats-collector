@@ -30,8 +30,6 @@ exports.declare = ({name, description, requires, nines, days, testOnly}) => {
     requires: ['monitor', 'clock', 'signalFxRest', 'ingest'].concat(requires || []),
     testOnly,
   }, function () {
-    const history = [];
-
     this.scheduleNextRun = () => {
       const now = this.clock.msec();
       // DELAY after the next even hour
@@ -49,24 +47,22 @@ exports.declare = ({name, description, requires, nines, days, testOnly}) => {
       let now = this.clock.msec();
       now -= now % HOUR; // round down to the previous hour
 
-      let earliest = now - days * DAY;
-
-      // fetch new data and add to history
-      let startMs = earliest;
+      // fetch all data for the EB duration; this re-fetches data every hour, but in so
+      // doing manages to catch any "late" data from the underlying SLO
+      let startMs = now - days * DAY;
       let endMs = this.clock.msec();
-      if (history.length) {
-        startMs = history[history.length - 1][0] + HOUR;
-      }
 
+      const history = [];
       (await this.signalFxRest.timeserieswindow({
         query: `sf_metric:slo.${name}`,
         startMs, endMs,
         resolution: HOUR,
       })).forEach(dp => history.push(dp));
 
-      // remove old history
-      while (history[0] && history[0][0] < earliest) {
-        history.shift();
+      if (history.length > 2) {
+        const last = history.length - 1;
+        const dpString = i => `${history[i][1]} at ${new Date(history[i][0])}`;
+        this.debug(`latest data from slo.${name}: [.., ${dpString(last-1)}, ${dpString(last)}]`);
       }
 
       // calculate the budget: 1.0 = never failed, 0.0 = failed more than the specified nines
@@ -77,7 +73,9 @@ exports.declare = ({name, description, requires, nines, days, testOnly}) => {
       const maxFraction = (100 - nines) / 100;
       const budget = fractionExceeded > maxFraction ? 0 : 1 - fractionExceeded / maxFraction;
 
-      this.debug(`Error budget for ${name} at ${new Date(now)} calculated at ${budget}`);
+      const pctMet = 100-Math.round(fractionExceeded*10000)/100;
+      this.debug(`Error budget for ${name} at ${new Date(now)} calculated at ${budget}: ` +
+                 `SLO met ${hoursMet} of ${hoursMeasured} hours or ${pctMet}%`);
       this.ingest.send({
         gauges: [{
           metric: `eb.${name}`,
