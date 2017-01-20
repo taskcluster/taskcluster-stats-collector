@@ -78,7 +78,7 @@ let load = loader(Object.assign({
     setup: ({cfg}) => docs.documenter({
       credentials: cfg.taskcluster.credentials,
       project: 'stats-collector',
-      tier: 'core',
+      tier: 'operations',
     }),
   },
 
