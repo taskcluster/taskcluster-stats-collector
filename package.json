@@ -23,11 +23,10 @@
     "sculpt": "^0.1.7",
     "signalfx": "^4.0.0",
     "slugid": "1.0.3",
-    "taskcluster-client": "^0.23.16",
+    "taskcluster-client": "^1.6.3",
     "taskcluster-lib-docs": "^3.3.0",
     "taskcluster-lib-loader": "1.1.0",
     "taskcluster-lib-monitor": "^0.2.1",
-    "tc-rules": "^3.0.1",
     "typed-env-config": "^1.0.0",
     "yargs": "^6.4.0"
   },
