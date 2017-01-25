@@ -53,6 +53,7 @@ class TaskListener extends EventEmitter {
 
   async close () {
     debug('hutting down');
+    await this.listener.close();
     await this.connection.close();
   }
 
