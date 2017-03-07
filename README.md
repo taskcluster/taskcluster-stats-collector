@@ -85,3 +85,7 @@ First setup your `user-config.yml` based on `user-config-example.yml`. Then run
 ```
 npm test
 ```
+
+# Service Owner
+
+Service Owner: dustin@mozilla.com
