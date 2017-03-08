@@ -1,18 +1,21 @@
 language: node_js
 sudo: false
 node_js:
-- '5'
+- '7'
 addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
     packages:
     - g++-4.8
-script: npm test
 env:
   global:
   - DEBUG='stats-collector:* test* -babel'
   - CXX=g++-4.8
+cache:
+  yarn: true
+  directories:
+    - node_modules
 notifications:
   irc:
     channels:

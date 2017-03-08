@@ -63,7 +63,7 @@ The service-level metrics available are:
 
 # Running locally
 
-To run the server locally, compile (`npm run compile`) and then execute:
+To run the server locally, compile (`yarn compile`) and then execute:
 
 ```
 NODE_ENV=development DEBUG=* node lib/main server
@@ -83,7 +83,7 @@ NODE_ENV=development DEBUG=* node lib/main server --collectors pending sli.gecko
 First setup your `user-config.yml` based on `user-config-example.yml`. Then run
 
 ```
-npm test
+yarn test
 ```
 
 # Service Owner
