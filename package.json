@@ -31,8 +31,9 @@
     "tc-rules": "^3.0.1",
     "yargs": "^6.4.0"
   },
+  "engine-strict": true,
   "engines": {
-    "node": "^5.10.1",
-    "npm": "^3.8.3"
+    "node": "7.7.1",
+    "yarn": "0.21.3"
   }
 }
