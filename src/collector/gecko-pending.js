@@ -89,12 +89,12 @@ slo.declare({
   name: 'gecko.pending',
   description: [
     'The pending time for gecko jobs should be within a reasonable limit.',
-    'specifically, test and build jobs should start within 30 minutes of',
-    'being scheduled, while other jobs should start within 20 minutes.',
+    'specifically, test and build jobs should start within 45 and 30 minutes of',
+    'being scheduled respectively, while other jobs should start within 20 minutes.',
   ].join('\n'),
   indicators: [
     {sli: 'gecko.pending.other', resolution: '5m', met: v => v < 20 * MINUTE},
-    {sli: 'gecko.pending.test', resolution: '5m', met: v => v < 30 * MINUTE},
+    {sli: 'gecko.pending.test', resolution: '5m', met: v => v < 45 * MINUTE},
     {sli: 'gecko.pending.build', resolution: '5m', met: v => v < 30 * MINUTE},
   ],
 });
