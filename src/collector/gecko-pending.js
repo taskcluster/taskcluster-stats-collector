@@ -6,6 +6,8 @@ import eb from '../eb';
 
 const MINUTE = 60 * 1000;
 
+const NONPROVISIONED_WORKERTYPES = ['releng-hardware.gecko-t-osx-1010'];
+
 const getAwsWorkerTypes = async () => {
   const prov = new taskcluster.AwsProvisioner();
   return await prov.listWorkerTypes();
@@ -20,15 +22,17 @@ sli.declare({
     'period to avoid outliers.',
   ].join('\n'),
   inputs: async () => {
-    const workerTypes = filter(await getAwsWorkerTypes(), workerType =>
+    let workerTypes = filter(await getAwsWorkerTypes(), workerType =>
         // old workerTypes are 'desktop-test*', but we still monitor those
         workerType.startsWith('desktop-test') || (
           // exclude *-alpha, *-beta as those are just for testing and may be delayed
           workerType.startsWith('gecko-t-') && !/-(alpha|beta)$/.test(workerType)));
+    workerTypes = workerTypes.map(wt => { return `aws-provisioner-v1.${wt}`; });
+    workerTypes = workerTypes.concat(NONPROVISIONED_WORKERTYPES);
     return workerTypes.map(wt => {
       return {
         spec: 'statsum',
-        metric: `tc-stats-collector.tasks.aws-provisioner-v1.${wt}.pending`,
+        metric: `tc-stats-collector.tasks.${wt}.pending`,
         resolution: '5m',
         percentile: 95,
       };
