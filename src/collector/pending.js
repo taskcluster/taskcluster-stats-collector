@@ -22,6 +22,7 @@ const NONPROVISIONED_WORKERTYPES = [
   'scriptworker-prov-v1.pushapk-v1',
   'scriptworker-prov-v1.signing-linux-v1',
   'signing-provisioner-v1.signing-worker-v1',
+  'releng-hardware.gecko-t-osx-1010',
 ];
 
 // useless test provisioners
