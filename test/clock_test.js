@@ -4,7 +4,7 @@ import load from '../lib/main';
 suite('Clock', () => {
   let clock;
 
-  suiteSetup(async function () {
+  suiteSetup(async function() {
     clock = await load('clock', {profile: 'test'});
   });
 

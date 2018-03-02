@@ -40,7 +40,7 @@ exports.declare = ({name, description, requires, indicators, testOnly}) => {
     description,
     requires: ['monitor', 'clock', 'signalFxRest', 'ingest'].concat(requires || []),
     testOnly,
-  }, async function () {
+  }, async function() {
     const inputSources = indicators.map(({sli, resolution}) => {
       const resolutionMs = RESOLUTIONS[resolution];
       const stream = signalFxMetricStream({
@@ -52,11 +52,11 @@ exports.declare = ({name, description, requires, indicators, testOnly}) => {
         signalFxRest: this.signalFxRest,
       })
       // log that input
-      .pipe(metricLoggerStream({
-        prefix: `received from ${sli}`,
-        log: msg => this.debug(msg),
-        clock: this.clock,
-      }));
+        .pipe(metricLoggerStream({
+          prefix: `received from ${sli}`,
+          log: msg => this.debug(msg),
+          clock: this.clock,
+        }));
       return {name: sli, stream};
     });
 

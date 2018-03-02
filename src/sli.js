@@ -40,7 +40,7 @@ exports.declare = ({name, description, requires, inputs, aggregate, testOnly}) =
     description,
     requires: ['monitor', 'clock', 'signalFxRest', 'ingest'].concat(requires || []),
     testOnly,
-  }, async function () {
+  }, async function() {
     let inputSpecs;
     if (typeof inputs === 'function') {
       inputSpecs = await inputs.call(this);

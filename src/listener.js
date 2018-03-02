@@ -17,7 +17,7 @@ class TaskListener extends EventEmitter {
    * credentials: Pulse username and password
    *
    */
-  constructor (options) {
+  constructor(options) {
     assert(options.credentials.username, 'Need Pulse credentials!');
     assert(options.credentials.password, 'Need Pulse credentials!');
 
@@ -46,18 +46,18 @@ class TaskListener extends EventEmitter {
     });
   }
 
-  async start () {
+  async start() {
     debug('starting');
     await this.listener.resume();
   }
 
-  async close () {
+  async close() {
     debug('hutting down');
     await this.listener.close();
     await this.connection.close();
   }
 
-  onMessage (message) {
+  onMessage(message) {
     let that = this;
     let {payload, exchange} = message;
     let action = exchange.split('/').pop();

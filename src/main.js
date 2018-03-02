@@ -100,8 +100,8 @@ let load = loader(Object.assign({
   },
 },
   // include a component for each collector
-  collectorManager.components()),
-  ['profile']);
+collectorManager.components()),
+['profile']);
 
 // If this file is executed launch component from first argument
 if (!module.parent) {

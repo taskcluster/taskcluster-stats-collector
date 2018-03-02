@@ -29,7 +29,7 @@ exports.declare = ({name, description, requires, nines, days, testOnly}) => {
     description,
     requires: ['monitor', 'clock', 'signalFxRest', 'ingest'].concat(requires || []),
     testOnly,
-  }, function () {
+  }, function() {
     this.scheduleNextRun = () => {
       const now = this.clock.msec();
       // DELAY after the next even hour

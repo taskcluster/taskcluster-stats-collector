@@ -25,7 +25,7 @@ var EventEmitter = require('events');
  * collector.
  */
 class CollectorManager extends EventEmitter {
-  constructor () {
+  constructor() {
     super();
     this.collectors = [];
   }
@@ -33,7 +33,7 @@ class CollectorManager extends EventEmitter {
   /**
    * Load all collector implementations in collectors/*.js
    */
-  setup (argv) {
+  setup(argv) {
     this.argv = argv;
     fs.readdirSync(path.join(__dirname, 'collector')).forEach((f) => {
       if (f.endsWith('.js')) {
@@ -66,7 +66,7 @@ class CollectorManager extends EventEmitter {
    *    ..,             // any `options.requires` elements, included by name
    * }
    */
-  collector (options, setup) {
+  collector(options, setup) {
     if (!options.name) {
       throw new Error('Collector must have a name');
     }
@@ -88,7 +88,7 @@ class CollectorManager extends EventEmitter {
    * Get a set of tc-lib-loader components, one for each collector, plus
    * a `collectors` component that loads them all.
    */
-  components () {
+  components() {
     // support only loading only one collector, for development
     let collectors = this.collectors;
 
@@ -130,7 +130,7 @@ class CollectorManager extends EventEmitter {
    * This emits a `started` event which other components can listen for.  When
    * this event is emitted, all collectors are set up and ready to accept events.
    */
-  start () {
+  start() {
     this.emit('started', {});
   }
 }

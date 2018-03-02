@@ -51,7 +51,7 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
 
   let output;
   const fetch = () => {
-    (async function () {
+    (async function() {
       const now = clock.msec();
 
       let startMs = latestDatapoint;
@@ -93,7 +93,7 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
         wakeup += QUANTIZER_DELAY;        // and wait for the quantizer to write out the data
 
         clock.setTimeout(`fetch next datapoint for ${query}`,
-            fetch, wakeup > now ? wakeup - now : 0);
+          fetch, wakeup > now ? wakeup - now : 0);
       } else {
         // still historical, so query right away
         process.nextTick(fetch);
@@ -221,7 +221,7 @@ export const multiplexMetricStreams = ({name, streams, clock}) => {
   let warm = false;
 
   // output is a readable stream, but with no read method (so, only operating in pull mode)
-  const output = new Readable({objectMode: true, read: function () { this.pause(); }});
+  const output = new Readable({objectMode: true, read: function() { this.pause(); }});
   let outputLive = false;
 
   const inputs = streams.map(({stream, name}) => {
@@ -248,7 +248,7 @@ export const multiplexMetricStreams = ({name, streams, clock}) => {
 
       if (chunk.ts < vtime) {
         debug('discarding late datapoint %s at %s from stream %s',
-            chunk.value, chunk.ts, name);
+          chunk.value, chunk.ts, name);
       }
       input.datapoints.push(chunk);
 
