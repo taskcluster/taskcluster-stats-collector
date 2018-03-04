@@ -3,17 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "compile": "babel-compile -p taskcluster src:lib test:.test",
     "lint": "eslint src/*.js test/*.js",
-    "pretest": "yarn lint && npm run compile",
-    "test": "mocha .test/*_test.js"
+    "pretest": "yarn lint",
+    "test": "mocha test/*_test.js"
   },
   "devDependencies": {
     "assume": "^1.5.2",
-    "babel-cli": "^6.26.0",
-    "babel-compile": "^2.0.0",
-    "babel-preset-taskcluster": "^3.0.0",
-    "babel-runtime": "^6.26.0",
     "eslint": "^4.18.1",
     "eslint-config-taskcluster": "^3.0.0",
     "requestretry": "^1.13.0"

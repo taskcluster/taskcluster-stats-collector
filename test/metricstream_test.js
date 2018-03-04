@@ -13,7 +13,7 @@ import {
   metricLoggerStream,
   signalFxIngester,
   multiplexMetricStreams,
-} from '../lib/metricstream';
+} from '../src/metricstream';
 
 const HOUR = 3600000;
 

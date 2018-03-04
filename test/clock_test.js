@@ -1,5 +1,5 @@
 import assume from 'assume';
-import load from '../lib/main';
+import load from '../src/main';
 
 suite('Clock', () => {
   let clock;

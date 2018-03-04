@@ -1,6 +1,6 @@
 import assume from 'assume';
-import load from '../lib/main';
-import SignalFxRest from '../lib/signalfx-rest';
+import load from '../src/main';
+import SignalFxRest from '../src/signalfx-rest';
 
 suite('SignalFxRest', () => {
   let rest;

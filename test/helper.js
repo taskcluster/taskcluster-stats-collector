@@ -1,5 +1,5 @@
-import load from '../lib/main';
-import collectorManager from '../lib/collectormanager';
+import load from '../src/main';
+import collectorManager from '../src/collectormanager';
 import EventEmitter from 'events';
 import debugModule from 'debug';
 import assume from 'assume';
