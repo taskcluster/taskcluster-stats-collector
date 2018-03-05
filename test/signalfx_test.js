@@ -1,6 +1,6 @@
-import assume from 'assume';
-import load from '../src/main';
-import SignalFxRest from '../src/signalfx-rest';
+const assume = require('assume');
+const load = require('../src/main');
+const SignalFxRest = require('../src/signalfx-rest');
 
 suite('SignalFxRest', () => {
   let rest;

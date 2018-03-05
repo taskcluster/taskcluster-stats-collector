@@ -1,7 +1,7 @@
-import path from 'path';
-import fs from 'fs';
-import debug from 'debug';
-import {every, find, filter} from 'lodash';
+const path = require('path');
+const fs = require('fs');
+const debug = require('debug');
+const {every, find, filter} = require('lodash');
 var EventEmitter = require('events');
 
 /**

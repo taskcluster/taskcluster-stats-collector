@@ -1,5 +1,5 @@
-import debugModule from 'debug';
-import _ from 'lodash';
+const debugModule = require('debug');
+const _ = require('lodash');
 
 const debug = debugModule('clock');
 
@@ -57,4 +57,4 @@ class Clock {
   }
 };
 
-export default Clock;
+module.exports = Clock;

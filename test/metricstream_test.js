@@ -1,19 +1,19 @@
-import assume from 'assume';
-import debugModule from 'debug';
-import {
+const assume = require('assume');
+const debugModule = require('debug');
+const {
   FakeSignalFxRest,
   FakeClock,
   FakeIngest,
   MetricStreamSource,
   MetricStreamSink,
   nextTick,
-} from './helper';
-import {
+} = require('./helper');
+const {
   signalFxMetricStream,
   metricLoggerStream,
   signalFxIngester,
   multiplexMetricStreams,
-} from '../src/metricstream';
+} = require('../src/metricstream');
 
 const HOUR = 3600000;
 

@@ -1,5 +1,5 @@
-import assume from 'assume';
-import load from '../src/main';
+const assume = require('assume');
+const load = require('../src/main');
 
 suite('Clock', () => {
   let clock;

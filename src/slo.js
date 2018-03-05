@@ -1,15 +1,15 @@
-import RESOLUTIONS from './resolutions';
-import collectorManager from './collectormanager';
-import sculpt from 'sculpt';
-import _ from 'lodash';
-import {
+const RESOLUTIONS = require('./resolutions');
+const collectorManager = require('./collectormanager');
+const sculpt = require('sculpt');
+const _ = require('lodash');
+const {
   signalFxMetricStream,
   signalFxIngester,
   multiplexMetricStreams,
   metricLoggerStream,
   aggregateMetricStream,
   sinkStream,
-} from './metricstream';
+} = require('./metricstream');
 
 /**
  * Declare an SLO, a service level objective.  This will declare and implement
@@ -112,4 +112,3 @@ exports.declare = ({name, description, requires, indicators, testOnly}) => {
     muxStream.pipe(aggregateStream).pipe(ingestStream).pipe(logStream).pipe(sink);
   });
 };
-

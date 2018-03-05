@@ -1,11 +1,11 @@
-import request from 'requestretry';
+const request = require('requestretry');
 
 /**
  * A simple interface to the SignalFX REST API, since signalfx-nodejs does not
  * supply one.
  */
 
-export default class SignalFxRest {
+module.exports = class SignalFxRest {
   constructor(api_token) {
     this.api_token = api_token;
   }

@@ -1,5 +1,5 @@
-import collectorManager from './collectormanager';
-import {sum} from 'lodash';
+const collectorManager = require('./collectormanager');
+const {sum} = require('lodash');
 
 const MINUTE = 1000 * 60;
 const HOUR = MINUTE * 60;

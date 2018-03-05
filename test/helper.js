@@ -1,11 +1,11 @@
-import load from '../src/main';
-import collectorManager from '../src/collectormanager';
-import EventEmitter from 'events';
-import debugModule from 'debug';
-import assume from 'assume';
-import {Writable, Readable} from 'stream';
+const load = require('../src/main');
+const collectorManager = require('../src/collectormanager');
+const EventEmitter = require('events');
+const debugModule = require('debug');
+const assume = require('assume');
+const {Writable, Readable} = require('stream');
 
-export class FakeQueue {
+class FakeQueue {
   constructor() {
     this.statuses = {};
     this.pendingCounts = {};
@@ -33,7 +33,7 @@ export class FakeQueue {
   }
 };
 
-export class FakeClock {
+class FakeClock {
   constructor() {
     this._msec = 1000000000;
     this._timers = [];
@@ -90,7 +90,7 @@ export class FakeClock {
   }
 };
 
-export class FakeSignalFxRest {
+class FakeSignalFxRest {
   constructor() {
     this.datapoints = [];
   }
@@ -110,7 +110,7 @@ export class FakeSignalFxRest {
   }
 };
 
-export class FakeIngest {
+class FakeIngest {
   constructor() {
     this.ingested = [];
   }
@@ -120,7 +120,7 @@ export class FakeIngest {
   }
 };
 
-export class MetricStreamSource extends Readable {
+class MetricStreamSource extends Readable {
   constructor(clock) {
     super({objectMode: true});
     this.clock = clock;
@@ -146,7 +146,7 @@ export class MetricStreamSource extends Readable {
   }
 };
 
-export class MetricStreamSink extends Writable {
+class MetricStreamSink extends Writable {
   constructor(clock) {
     super({objectMode: true});
     this.clock = clock;
@@ -160,7 +160,7 @@ export class MetricStreamSink extends Writable {
   }
 };
 
-export const makeCollector = async name => {
+module.exports.makeCollector = async name => {
   const fakes = {};
 
   fakes.monitor = await load('monitor', {profile: 'test'}); // mocked in the test profile
@@ -177,3 +177,10 @@ export const makeCollector = async name => {
 
   return fakes;
 };
+
+module.exports.FakeQueue = FakeQueue;
+module.exports.FakeClock = FakeClock;
+module.exports.FakeSignalFxRest = FakeSignalFxRest;
+module.exports.FakeIngest = FakeIngest;
+module.exports.MetricStreamSource = MetricStreamSource;
+module.exports.MetricStreamSink = MetricStreamSink;

@@ -1,5 +1,5 @@
-import collectorManager from '../collectormanager';
-import _ from 'lodash';
+const collectorManager = require('../collectormanager');
+const _ = require('lodash');
 
 collectorManager.collector({
   name: 'running',

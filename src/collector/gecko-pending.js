@@ -1,8 +1,8 @@
-import {max, filter} from 'lodash';
-import taskcluster from 'taskcluster-client';
-import sli from '../sli';
-import slo from '../slo';
-import eb from '../eb';
+const {max, filter} = require('lodash');
+const taskcluster = require('taskcluster-client');
+const sli = require('../sli');
+const slo = require('../slo');
+const eb = require('../eb');
 
 const MINUTE = 60 * 1000;
 
