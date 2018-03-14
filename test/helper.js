@@ -1,17 +1,17 @@
-import load from '../lib/main';
-import collectorManager from '../lib/collectormanager';
-import EventEmitter from 'events';
-import debugModule from 'debug';
-import assume from 'assume';
-import {Writable, Readable} from 'stream';
+const load = require('../src/main');
+const collectorManager = require('../src/collectormanager');
+const EventEmitter = require('events');
+const debugModule = require('debug');
+const assume = require('assume');
+const {Writable, Readable} = require('stream');
 
-export class FakeQueue {
-  constructor () {
+class FakeQueue {
+  constructor() {
     this.statuses = {};
     this.pendingCounts = {};
   }
 
-  setStatus (taskId, runStates) {
+  setStatus(taskId, runStates) {
     if (typeof runStates === 'string') {
       runStates = [runStates];
     }
@@ -23,25 +23,25 @@ export class FakeQueue {
     };
   }
 
-  async pendingTasks (provisionerId, workerType) {
+  async pendingTasks(provisionerId, workerType) {
     return this.pendingCounts[`${provisionerId}.${workerType}`] || 0;
   }
 
-  async status (taskId) {
+  async status(taskId) {
     assume(this.statuses).to.include(taskId);
     return this.statuses[taskId];
   }
 };
 
-export class FakeClock {
-  constructor () {
+class FakeClock {
+  constructor() {
     this._msec = 1000000000;
     this._timers = [];
     this._debug = debugModule('FakeClock');
   }
 
   // advance the fake clock, with some node ticks included
-  async tick (msec) {
+  async tick(msec) {
     await new Promise(process.nextTick);
     const until = this._msec + msec;
 
@@ -64,18 +64,18 @@ export class FakeClock {
     }
   }
 
-  msec () {
+  msec() {
     return this._msec;
   }
 
-  setTimeout (name, fn, delay) {
+  setTimeout(name, fn, delay) {
     if (delay < 0) {
       throw new Error('setTimeout called with a negative delay');
     }
     this._timers.push({name, run: fn, next: this._msec + delay});
   }
 
-  periodically (interval, name, fn) {
+  periodically(interval, name, fn) {
     // note that, in testing, errors are fatal
     const run = async () => {
       await fn();
@@ -84,25 +84,25 @@ export class FakeClock {
     this._timers.push({name, run, next: this._msec + interval});
   }
 
-  throttle (fn) {
+  throttle(fn) {
     // for testing, do not apply throttling
     return fn;
   }
 };
 
-export class FakeSignalFxRest {
-  constructor () {
+class FakeSignalFxRest {
+  constructor() {
     this.datapoints = [];
   }
 
-  fakeDatapoint (query, timestamp, value) {
+  fakeDatapoint(query, timestamp, value) {
     if (!(query in this.datapoints)) {
       this.datapoints[query] = [];
     }
     this.datapoints[query].push([timestamp, value]);
   }
 
-  async timeserieswindow ({query, startMs, endMs, resolution}) {
+  async timeserieswindow({query, startMs, endMs, resolution}) {
     if (!(query in this.datapoints)) {
       throw new Error(`no fake datapoints for ${query}`);
     }
@@ -110,25 +110,25 @@ export class FakeSignalFxRest {
   }
 };
 
-export class FakeIngest {
-  constructor () {
+class FakeIngest {
+  constructor() {
     this.ingested = [];
   }
 
-  send (req) {
+  send(req) {
     this.ingested.push(req);
   }
 };
 
-export class MetricStreamSource extends Readable {
-  constructor (clock) {
+class MetricStreamSource extends Readable {
+  constructor(clock) {
     super({objectMode: true});
     this.clock = clock;
     this.on('error', console.error);
     this.live = false;
   }
 
-  sendAt (when, dp) {
+  sendAt(when, dp) {
     const push = () => {
       if (dp.live && !this.live) {
         this.live = true;
@@ -140,27 +140,27 @@ export class MetricStreamSource extends Readable {
     this.clock.setTimeout(`send datapoint ${JSON.stringify(dp)}`, push, when - this.clock.msec());
   } 
 
-  _read () {
+  _read() {
     // prevent repeatedly calling this method
     this.pause();
   }
 };
 
-export class MetricStreamSink extends Writable {
-  constructor (clock) {
+class MetricStreamSink extends Writable {
+  constructor(clock) {
     super({objectMode: true});
     this.clock = clock;
     this.received = [];
     this.on('error', console.error);
   }
 
-  _write (chunk, enc, next) {
+  _write(chunk, enc, next) {
     this.received.push({received: this.clock.msec(), chunk});
     next();
   }
 };
 
-export const makeCollector = async name => {
+module.exports.makeCollector = async name => {
   const fakes = {};
 
   fakes.monitor = await load('monitor', {profile: 'test'}); // mocked in the test profile
@@ -177,3 +177,10 @@ export const makeCollector = async name => {
 
   return fakes;
 };
+
+module.exports.FakeQueue = FakeQueue;
+module.exports.FakeClock = FakeClock;
+module.exports.FakeSignalFxRest = FakeSignalFxRest;
+module.exports.FakeIngest = FakeIngest;
+module.exports.MetricStreamSource = MetricStreamSource;
+module.exports.MetricStreamSink = MetricStreamSink;

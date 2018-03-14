@@ -7,9 +7,9 @@ let collectorManager = require('./collectormanager');
 let taskcluster = require('taskcluster-client');
 let signalfx = require('signalfx');
 let debugModule = require('debug');
-import Clock from './clock';
-import SignalFxRest from './signalfx-rest';
-import yargs from 'yargs';
+const Clock = require('./clock');
+const SignalFxRest = require('./signalfx-rest');
+const yargs = require('yargs');
 
 const argv = yargs
   .usage('Usage: $0 --collectors C')
@@ -100,8 +100,8 @@ let load = loader(Object.assign({
   },
 },
   // include a component for each collector
-  collectorManager.components()),
-  ['profile']);
+collectorManager.components()),
+['profile']);
 
 // If this file is executed launch component from first argument
 if (!module.parent) {

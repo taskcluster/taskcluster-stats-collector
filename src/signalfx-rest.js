@@ -1,12 +1,12 @@
-import request from 'requestretry';
+const request = require('requestretry');
 
 /**
  * A simple interface to the SignalFX REST API, since signalfx-nodejs does not
  * supply one.
  */
 
-export default class SignalFxRest {
-  constructor (api_token) {
+module.exports = class SignalFxRest {
+  constructor(api_token) {
     this.api_token = api_token;
   }
 
@@ -24,7 +24,7 @@ export default class SignalFxRest {
    * Note that the resolution must be one of the whitelisted resolution values or
    * you will get an error (or just no data).
    */
-  async timeserieswindow ({query, startMs, endMs, resolution}) {
+  async timeserieswindow({query, startMs, endMs, resolution}) {
     const qs = `query=${encodeURIComponent(query)}&startMs=${startMs}&endMs=${endMs}&resolution=${resolution}`;
     const url = `https://api.signalfx.com/v1/timeserieswindow?${qs}`;
 

@@ -1,1 +1,1 @@
-run: node lib/main server
+run: node src/main server

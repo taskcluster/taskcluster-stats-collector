@@ -1,10 +1,10 @@
-import assume from 'assume';
-import load from '../lib/main';
+const assume = require('assume');
+const load = require('../src/main');
 
 suite('Clock', () => {
   let clock;
 
-  suiteSetup(async function () {
+  suiteSetup(async function() {
     clock = await load('clock', {profile: 'test'});
   });
 

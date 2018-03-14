@@ -1,5 +1,5 @@
-import collectorManager from './collectormanager';
-import {sum} from 'lodash';
+const collectorManager = require('./collectormanager');
+const {sum} = require('lodash');
 
 const MINUTE = 1000 * 60;
 const HOUR = MINUTE * 60;
@@ -29,7 +29,7 @@ exports.declare = ({name, description, requires, nines, days, testOnly}) => {
     description,
     requires: ['monitor', 'clock', 'signalFxRest', 'ingest'].concat(requires || []),
     testOnly,
-  }, function () {
+  }, function() {
     this.scheduleNextRun = () => {
       const now = this.clock.msec();
       // DELAY after the next even hour

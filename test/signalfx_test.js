@@ -1,11 +1,11 @@
-import assume from 'assume';
-import load from '../lib/main';
-import SignalFxRest from '../lib/signalfx-rest';
+const assume = require('assume');
+const load = require('../src/main');
+const SignalFxRest = require('../src/signalfx-rest');
 
 suite('SignalFxRest', () => {
   let rest;
 
-  suiteSetup(async function () {
+  suiteSetup(async function() {
     const cfg = await load('cfg', {profile: 'test'});
     if (!cfg.signalfx.apiToken) {
       this.skip();

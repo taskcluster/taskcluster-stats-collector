@@ -1,14 +1,14 @@
-import RESOLUTIONS from './resolutions';
-import collectorManager from './collectormanager';
-import sculpt from 'sculpt';
-import {
+const RESOLUTIONS = require('./resolutions');
+const collectorManager = require('./collectormanager');
+const sculpt = require('sculpt');
+const {
   signalFxIngester,
   signalFxMetricStream,
   multiplexMetricStreams,
   metricLoggerStream,
   aggregateMetricStream,
   sinkStream,
-} from './metricstream';
+} = require('./metricstream');
 
 /**
  * Declare an SLI, a service level indicator.  This will declare and implement
@@ -40,7 +40,7 @@ exports.declare = ({name, description, requires, inputs, aggregate, testOnly}) =
     description,
     requires: ['monitor', 'clock', 'signalFxRest', 'ingest'].concat(requires || []),
     testOnly,
-  }, async function () {
+  }, async function() {
     let inputSpecs;
     if (typeof inputs === 'function') {
       inputSpecs = await inputs.call(this);

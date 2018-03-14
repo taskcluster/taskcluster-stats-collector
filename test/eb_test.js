@@ -1,7 +1,7 @@
 const HOUR = 3600 * 1000;
 const DAY = 24 * HOUR;
 
-suite('eb', function () {
+suite('eb', function() {
   const assume = require('assume');
   const helper = require('./helper');
   let fakes, collector, basetime;

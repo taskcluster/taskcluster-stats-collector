@@ -1,6 +1,6 @@
-import collectorManager from '../collectormanager';
-import taskcluster from 'taskcluster-client';
-import _ from 'lodash';
+const collectorManager = require('../collectormanager');
+const taskcluster = require('taskcluster-client');
+const _ = require('lodash');
 
 const FLUSH_INTERVAL = 60; // seconds
 

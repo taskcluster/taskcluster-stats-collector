@@ -1,9 +1,9 @@
-import {Writable} from 'stream';
-import sculpt from 'sculpt';
-import {Readable} from 'stream';
-import _ from 'lodash';
-import debugModule from 'debug';
-import RESOLUTIONS from './resolutions';
+const {Writable} = require('stream');
+const sculpt = require('sculpt');
+const {Readable} = require('stream');
+const _ = require('lodash');
+const debugModule = require('debug');
+const RESOLUTIONS = require('./resolutions');
 
 const HOUR = 1000 * 60 * 60;
 
@@ -34,7 +34,7 @@ const HOUR = 1000 * 60 * 60;
  *
  * Resolution must be one of `5s`, `1m`, `5m`, '1h'.
  */
-export const signalFxMetricStream = ({query, resolution, start, clock, signalFxRest}) => {
+module.exports.signalFxMetricStream = function({query, resolution, start, clock, signalFxRest}) {
   let latestDatapoint = start - 1;  // -1 to capture a datapoint at start
   let liveData = false;
 
@@ -51,7 +51,7 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
 
   let output;
   const fetch = () => {
-    (async function () {
+    (async function() {
       const now = clock.msec();
 
       let startMs = latestDatapoint;
@@ -93,7 +93,7 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
         wakeup += QUANTIZER_DELAY;        // and wait for the quantizer to write out the data
 
         clock.setTimeout(`fetch next datapoint for ${query}`,
-            fetch, wakeup > now ? wakeup - now : 0);
+          fetch, wakeup > now ? wakeup - now : 0);
       } else {
         // still historical, so query right away
         process.nextTick(fetch);
@@ -128,7 +128,7 @@ export const signalFxMetricStream = ({query, resolution, start, clock, signalFxR
  *    clock: clock object for calculating delay (optional)
  *  }
  */
-export const metricLoggerStream = ({prefix, log, clock}) => {
+module.exports.metricLoggerStream = function({prefix, log, clock}) {
   const _prefix = prefix ? `${prefix}: ` : '';
   const _log = log || console.log;
   const msec = () => clock && clock.msec() || +new Date();
@@ -152,7 +152,7 @@ export const metricLoggerStream = ({prefix, log, clock}) => {
  *   ingest: // Ingest object from the SignalFx client
  * }
  */
-export const signalFxIngester = ({metric, type, ingest}) => {
+module.exports.signalFxIngester = ({metric, type, ingest}) => {
   const plurals = {
     gauge: 'gauges',
     cumulative_counter: 'cumulative_counters',
@@ -181,7 +181,7 @@ export const signalFxIngester = ({metric, type, ingest}) => {
  * A simple stream that sinks all data.  Use this to terminate a sequence
  * of through streams.
  */
-export const sinkStream = () => {
+module.exports.sinkStream = () => {
   return new Writable({
     objectMode: true,
     write: (chunk, enc, next) => next(),
@@ -215,13 +215,13 @@ export const sinkStream = () => {
  *   ...
  * ]
  */
-export const multiplexMetricStreams = ({name, streams, clock}) => {
+module.exports.multiplexMetricStreams = ({name, streams, clock}) => {
   const debug = debugModule(`multiplexMetricStreams.${name || 'unnamed'}`);
   let vtime = 0;
   let warm = false;
 
   // output is a readable stream, but with no read method (so, only operating in pull mode)
-  const output = new Readable({objectMode: true, read: function () { this.pause(); }});
+  const output = new Readable({objectMode: true, read: function() { this.pause(); }});
   let outputLive = false;
 
   const inputs = streams.map(({stream, name}) => {
@@ -248,7 +248,7 @@ export const multiplexMetricStreams = ({name, streams, clock}) => {
 
       if (chunk.ts < vtime) {
         debug('discarding late datapoint %s at %s from stream %s',
-            chunk.value, chunk.ts, name);
+          chunk.value, chunk.ts, name);
       }
       input.datapoints.push(chunk);
 
@@ -341,7 +341,7 @@ export const multiplexMetricStreams = ({name, streams, clock}) => {
  * a single value
  *
  */
-export const aggregateMetricStream = ({aggregate}) => {
+module.exports.aggregateMetricStream = ({aggregate}) => {
   return sculpt.filter(dp => {
     if (!dp.hasOwnProperty('nowLive')) {
       dp.value = aggregate(dp.value);

@@ -1,15 +1,15 @@
-import RESOLUTIONS from './resolutions';
-import collectorManager from './collectormanager';
-import sculpt from 'sculpt';
-import _ from 'lodash';
-import {
+const RESOLUTIONS = require('./resolutions');
+const collectorManager = require('./collectormanager');
+const sculpt = require('sculpt');
+const _ = require('lodash');
+const {
   signalFxMetricStream,
   signalFxIngester,
   multiplexMetricStreams,
   metricLoggerStream,
   aggregateMetricStream,
   sinkStream,
-} from './metricstream';
+} = require('./metricstream');
 
 /**
  * Declare an SLO, a service level objective.  This will declare and implement
@@ -40,7 +40,7 @@ exports.declare = ({name, description, requires, indicators, testOnly}) => {
     description,
     requires: ['monitor', 'clock', 'signalFxRest', 'ingest'].concat(requires || []),
     testOnly,
-  }, async function () {
+  }, async function() {
     const inputSources = indicators.map(({sli, resolution}) => {
       const resolutionMs = RESOLUTIONS[resolution];
       const stream = signalFxMetricStream({
@@ -52,11 +52,11 @@ exports.declare = ({name, description, requires, indicators, testOnly}) => {
         signalFxRest: this.signalFxRest,
       })
       // log that input
-      .pipe(metricLoggerStream({
-        prefix: `received from ${sli}`,
-        log: msg => this.debug(msg),
-        clock: this.clock,
-      }));
+        .pipe(metricLoggerStream({
+          prefix: `received from ${sli}`,
+          log: msg => this.debug(msg),
+          clock: this.clock,
+        }));
       return {name: sli, stream};
     });
 
@@ -112,4 +112,3 @@ exports.declare = ({name, description, requires, indicators, testOnly}) => {
     muxStream.pipe(aggregateStream).pipe(ingestStream).pipe(logStream).pipe(sink);
   });
 };
-

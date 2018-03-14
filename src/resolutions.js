@@ -5,4 +5,4 @@ const RESOLUTIONS = {
   '1h': 60 * 60 * 1000,
 };
 
-export default RESOLUTIONS;
+module.exports = RESOLUTIONS;
