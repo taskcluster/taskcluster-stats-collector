@@ -1,5 +1,5 @@
-suite('TaskListener', () => {
-  test('listens', async () => {
+suite('TaskListener', function() {
+  test('listens', async function() {
     var debug = require('debug')('test:test');
     var assert = require('assert');
     var TaskListener = require('../src/listener.js');
@@ -9,6 +9,10 @@ suite('TaskListener', () => {
     let config = require('typed-env-config');
 
     let cfg = config({profile: 'test'});
+
+    if (process.env.NODE_ENV === 'development') {
+      this.skip();
+    }
 
     var taskdefn = {
       provisionerId: 'stats-provisioner',
