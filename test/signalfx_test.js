@@ -2,20 +2,26 @@ const assume = require('assume');
 const load = require('../src/main');
 const SignalFxRest = require('../src/signalfx-rest');
 
-suite('SignalFxRest', () => {
+suite('SignalFxRest', function() {
   let rest;
+  let apiTokenPresent = false;
 
   suiteSetup(async function() {
     const cfg = await load('cfg', {profile: 'test'});
-    if (!cfg.signalfx.apiToken) {
-      this.skip();
+    if (cfg.signalfx.apiToken) {
+      apiTokenPresent = true;
+      rest = new SignalFxRest(cfg.signalfx.apiToken);
     }
-
-    rest = new SignalFxRest(cfg.signalfx.apiToken);
   });
 
-  suite('timeserieswindow', async () => {
-    test('throws an error for a nonexistent metric', async () => {
+  suite('timeserieswindow', async function() {
+    setup(function() {
+      if (!apiTokenPresent) {
+        this.skip();
+      }
+    });
+
+    test('throws an error for a nonexistent metric', async function() {
       let gotError;
       await rest.timeserieswindow({
         query: 'sf_metric:no.such.metric',
@@ -26,7 +32,7 @@ suite('SignalFxRest', () => {
       assume(gotError).inherits(Error);
     });
 
-    test('returns a list of (timestamp, value) pairs for a demo metric', async () => {
+    test('returns a list of (timestamp, value) pairs for a demo metric', async function() {
       let ts = await rest.timeserieswindow({
         query: 'sf_metric:demo.trans.count AND demo_host:server6 ' +
                'AND demo_customer:samslack.com AND demo_datacenter:Tokyo',

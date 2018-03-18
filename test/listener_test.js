@@ -1,5 +1,5 @@
-suite('TaskListener', () => {
-  test('listens', async () => {
+suite('TaskListener', function() {
+  test('listens', async function() {
     var debug = require('debug')('test:test');
     var assert = require('assert');
     var TaskListener = require('../src/listener.js');
@@ -9,6 +9,11 @@ suite('TaskListener', () => {
     let config = require('typed-env-config');
 
     let cfg = config({profile: 'test'});
+
+    // Skip this test if no pulse credentials configured 
+    if (!cfg.pulse.username) { // and the password can be empty
+      this.skip();
+    }
 
     var taskdefn = {
       provisionerId: 'stats-provisioner',
@@ -24,8 +29,8 @@ suite('TaskListener', () => {
       },
     };
 
-    assert(cfg.pulse, 'pulse credentials required');
-    assert(cfg.taskcluster, 'taskcluster credentials required');
+    assert(cfg.taskcluster.credentials.clientId && cfg.taskcluster.credentials.accessToken,
+      'taskcluster credentials required');
 
     let monitor = await monitoring({
       project: 'tc-stats-collector',
