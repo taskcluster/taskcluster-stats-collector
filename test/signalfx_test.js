@@ -15,11 +15,13 @@ suite('SignalFxRest', function() {
   });
 
   suite('timeserieswindow', async function() {
-    test('throws an error for a nonexistent metric', async function() {
+    setup(function() {
       if (!apiTokenPresent) {
         this.skip();
       }
+    });
 
+    test('throws an error for a nonexistent metric', async function() {
       let gotError;
       await rest.timeserieswindow({
         query: 'sf_metric:no.such.metric',
@@ -31,10 +33,6 @@ suite('SignalFxRest', function() {
     });
 
     test('returns a list of (timestamp, value) pairs for a demo metric', async function() {
-      if (!apiTokenPresent) {
-        this.skip();
-      }
-
       let ts = await rest.timeserieswindow({
         query: 'sf_metric:demo.trans.count AND demo_host:server6 ' +
                'AND demo_customer:samslack.com AND demo_datacenter:Tokyo',

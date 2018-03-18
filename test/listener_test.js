@@ -10,7 +10,8 @@ suite('TaskListener', function() {
 
     let cfg = config({profile: 'test'});
 
-    if (process.env.NODE_ENV === 'development') {
+    // Skip this test if no pulse credentials configured 
+    if (!cfg.pulse.username) { // and the password can be empty
       this.skip();
     }
 
@@ -28,8 +29,8 @@ suite('TaskListener', function() {
       },
     };
 
-    assert(cfg.pulse, 'pulse credentials required');
-    assert(cfg.taskcluster, 'taskcluster credentials required');
+    assert(cfg.taskcluster.credentials.clientId && cfg.taskcluster.credentials.accessToken,
+      'taskcluster credentials required');
 
     let monitor = await monitoring({
       project: 'tc-stats-collector',
