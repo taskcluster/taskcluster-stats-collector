@@ -1,4 +1,5 @@
 defaults:
+  noLogging: make blank to log
   signalfx:
     apiToken: '...'
   pulse:

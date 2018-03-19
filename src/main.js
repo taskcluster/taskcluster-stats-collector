@@ -39,6 +39,7 @@ let load = loader(Object.assign({
     setup: async ({cfg, monitor}) => new TaskListener({
       credentials: cfg.pulse,
       routingKey: {}, // different in tests
+      mock: cfg.noLogging && process.env.NODE_ENV !== 'production',
     }),
   },
 

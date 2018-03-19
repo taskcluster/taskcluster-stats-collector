@@ -18,10 +18,17 @@ class TaskListener extends EventEmitter {
    *
    */
   constructor(options) {
+    super();
+
+    this.mock = options.mock;
+
+    if (this.mock) {
+      debug('Fake!');
+      return;
+    }
+
     assert(options.credentials.username, 'Need Pulse credentials!');
     assert(options.credentials.password, 'Need Pulse credentials!');
-
-    super();
 
     let routingKey = options.routingKey || {};
 
@@ -47,12 +54,20 @@ class TaskListener extends EventEmitter {
   }
 
   async start() {
+    if (this.mock) {
+      debug('mock starting');
+      return;
+    }
     debug('starting');
     await this.listener.resume();
   }
 
   async close() {
-    debug('hutting down');
+    if (this.mock) {
+      debug('mock shutting down');
+      return;
+    }
+    debug('shutting down');
     await this.listener.close();
     await this.connection.close();
   }

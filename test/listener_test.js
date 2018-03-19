@@ -1,17 +1,62 @@
-suite('TaskListener', function() {
-  test('listens', async function() {
-    var debug = require('debug')('test:test');
-    var assert = require('assert');
-    var TaskListener = require('../src/listener.js');
-    var slugid = require('slugid');
-    var taskcluster = require('taskcluster-client');
-    var monitoring = require('taskcluster-lib-monitor');
-    let config = require('typed-env-config');
+const debug = require('debug')('test:test');
+const assert = require('assert');
+const TaskListener = require('../src/listener.js');
+const slugid = require('slugid');
+const taskcluster = require('taskcluster-client');
+const monitoring = require('taskcluster-lib-monitor');
+const config = require('typed-env-config');
 
+suite('TaskListener', function() {
+  test('cares about Pulse credentials in production', async function() {
+    const original_NODE_ENV = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+
+    assert.doesNotThrow(() => {
+      new TaskListener({
+        credentials: {username: 'fakeuser', password: 'fakepassword'},
+      });
+    }, 'Good credentials');
+
+    assert.throws(() => {
+      new TaskListener({
+        credentials: {username: '', password: ''},
+      });
+    }, 'Blank credentials');
+
+    assert.throws(() => {
+      new TaskListener({
+        credentials: {username: 'fakeuser', password: ''},
+      });
+    }, 'Username with blank password');
+
+    assert.throws(() => {
+      new TaskListener({
+        credentials: {username: 'fakeuser'},
+      });
+    }, 'Username only');
+
+    assert.throws(() => {
+      new TaskListener({
+        credentials: {password: 'fakepassword'},
+      });
+    }, 'Password only');
+
+    process.env.NODE_ENV = original_NODE_ENV;
+  });
+
+  test('mocks', async function() {
+    assert.doesNotThrow(async function() {
+      let listener = new TaskListener ({mock: true});
+      await listener.start();
+      await listener.close();
+    }, 'mock: true');
+  });
+
+  test('listens', async function() {
     let cfg = config({profile: 'test'});
 
     // Skip this test if no pulse credentials configured 
-    if (!cfg.pulse.username) { // and the password can be empty
+    if (!cfg.pulse.username || !cfg.pulse.password) {
       this.skip();
     }
 

@@ -1,4 +1,5 @@
 defaults:
+  noLogging: !env NO_LOGGING
   signalfx:
     apiToken: !env SIGNALFX_API_TOKEN
   pulse:
