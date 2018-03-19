@@ -71,7 +71,10 @@ let load = loader(Object.assign({
 
   signalFxRest: {
     requires: ['cfg'],
-    setup: ({cfg}) => new SignalFxRest(cfg.signalfx.apiToken),
+    setup: ({cfg}) => new SignalFxRest({
+      api_token: cfg.signalfx.apiToken,
+      mock: cfg.noLogging && process.env.NODE_ENV !== 'production',
+    }),
   },
 
   docs: {

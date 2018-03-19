@@ -6,8 +6,9 @@ const request = require('requestretry');
  */
 
 module.exports = class SignalFxRest {
-  constructor(api_token) {
-    this.api_token = api_token;
+  constructor(options) {
+    this.api_token = options.api_token;
+    this.mock = options.mock;
   }
 
   /**
@@ -25,6 +26,10 @@ module.exports = class SignalFxRest {
    * you will get an error (or just no data).
    */
   async timeserieswindow({query, startMs, endMs, resolution}) {
+    if (this.mock) {
+      return [];
+    }
+
     const qs = `query=${encodeURIComponent(query)}&startMs=${startMs}&endMs=${endMs}&resolution=${resolution}`;
     const url = `https://api.signalfx.com/v1/timeserieswindow?${qs}`;
 
