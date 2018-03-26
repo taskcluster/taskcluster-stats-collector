@@ -10,7 +10,7 @@ suite('SignalFxRest', function() {
     const cfg = await load('cfg', {profile: 'test'});
     if (cfg.signalfx.apiToken) {
       apiTokenPresent = true;
-      rest = new SignalFxRest(cfg.signalfx.apiToken);
+      rest = new SignalFxRest({api_token: cfg.signalfx.apiToken});
     }
   });
 
