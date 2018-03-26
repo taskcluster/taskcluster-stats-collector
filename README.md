@@ -63,10 +63,10 @@ The service-level metrics available are:
 
 # Running locally
 
-To run the server locally, compile (`yarn compile`) and then execute:
+To run the server locally:
 
 ```
-NODE_ENV=development DEBUG=* node lib/main server
+NODE_ENV=development DEBUG=* node src/main server
 ```
 
 Note that you can use `--collectors` to specify the collectors you would like
@@ -74,7 +74,7 @@ to run in development mode, thereby avoiding noise from collectors you're not
 working on:
 
 ```
-NODE_ENV=development DEBUG=* node lib/main server --collectors pending sli.gecko.pending.test
+NODE_ENV=development DEBUG=* node src/main server --collectors pending sli.gecko.pending.test
 ```
 
 
