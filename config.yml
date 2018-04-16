@@ -4,14 +4,7 @@ defaults:
   pulse:
     username: !env PULSE_USERNAME
     password: !env PULSE_PASSWORD
-  monitoring:
-    project: !env MONITORING_PROJECT
-    enable: !env:bool MONITORING_ENABLE
   taskcluster:
     credentials:
       clientId:     !env TASKCLUSTER_CLIENT_ID
       accessToken:  !env TASKCLUSTER_ACCESS_TOKEN
-
-development:
-  monitoring:
-    enable: false
