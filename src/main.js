@@ -28,7 +28,8 @@ let load = loader(Object.assign({
   monitor: {
     requires: ['cfg'],
     setup: ({cfg}) => monitoring({
-      project: 'tc-stats-collector',
+      project: cfg.monitoring.project || 'tc-stats-collector',
+      enable: cfg.monitoring.enable,
       credentials: cfg.taskcluster.credentials,
       mock: process.env.NODE_ENV !== 'production',
     }),
