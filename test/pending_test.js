@@ -53,7 +53,7 @@ suite('collector.pending', () => {
     await fakes.clock.tick(1000);
     assertMeasures({
       // note that t4 is not represented here
-      'tasks.prov.wt.pending': [7000, 8000],
+      'tc-stats-collector.tasks.prov.wt.pending': [7000, 8000],
     });
   });
 
@@ -77,7 +77,7 @@ suite('collector.pending', () => {
     fakeTaskChange({state: 'pending', taskId: 't1', scheduled});
     await fakes.clock.tick(80000);
     assertMeasures({
-      'tasks.prov.wt.pending': [60000],
+      'tc-stats-collector.tasks.prov.wt.pending': [60000],
     }); // measured at the flush interval
   });
 
@@ -101,7 +101,7 @@ suite('collector.pending', () => {
 
     await fakes.clock.tick(30000);
     assertMeasures({
-      'tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT1],
+      'tc-stats-collector.tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT1],
     });
 
     fakeTaskChange({state: 'running', taskId: 't1'});
@@ -109,7 +109,7 @@ suite('collector.pending', () => {
 
     await fakes.clock.tick(60000);
     assertMeasures({
-      'tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT2],
+      'tc-stats-collector.tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT2],
     });
   });
 
@@ -122,7 +122,7 @@ suite('collector.pending', () => {
     fakeTaskChange({state: 'pending', taskId: 't1', scheduled: scheduledT1});
     await fakes.clock.tick(60000);
     assertMeasures({
-      'tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT1],
+      'tc-stats-collector.tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT1],
     });
 
     fakes.queue.setStatus('t2', 'pending');
@@ -138,7 +138,7 @@ suite('collector.pending', () => {
 
     await fakes.clock.tick(60000);
     assertMeasures({
-      'tasks.prov.wt.pending': [0],
+      'tc-stats-collector.tasks.prov.wt.pending': [0],
     });
   });
 });

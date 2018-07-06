@@ -40,8 +40,8 @@ suite('collector.running', () => {
     fakeTaskChange({state: 'resolved', runs: [
       {reasonCreated: 'scheduled', reasonResolved: 'completed', started: 10000, resolved: 20000},
     ]});
-    assertMeasures({'tasks.wt.running': [10000]});
-    assertCounts({'tasks.wt.resolved.completed': 1});
+    assertMeasures({'tc-stats-collector.tasks.wt.running': [10000]});
+    assertCounts({'tc-stats-collector.tasks.wt.resolved.completed': 1});
   });
 
   test('deadline-exceeded runs are not timed, but are counted', async () => {
@@ -49,7 +49,7 @@ suite('collector.running', () => {
       {reasonCreated: 'scheduled', reasonResolved: 'deadline-exceeded', started: 10000, resolved: 20000},
     ]});
     assertMeasures({});
-    assertCounts({'tasks.wt.resolved.deadline-exceeded': 1});
+    assertCounts({'tc-stats-collector.tasks.wt.resolved.deadline-exceeded': 1});
   });
 
   test('a run created due to retry, and any runs before it, are ignored', async () => {
@@ -58,7 +58,7 @@ suite('collector.running', () => {
       {reasonCreated: 'retry', reasonResolved: 'failed', started: 50000, resolved: 80000},
       {reasonCreated: 'rerun', reasonResolved: 'completed', started: 80000, resolved: 90000},
     ]});
-    assertMeasures({'tasks.wt.running': [10000]});
-    assertCounts({'tasks.wt.resolved.completed': 1});
+    assertMeasures({'tc-stats-collector.tasks.wt.running': [10000]});
+    assertCounts({'tc-stats-collector.tasks.wt.resolved.completed': 1});
   });
 });

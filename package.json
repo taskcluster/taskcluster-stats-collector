@@ -28,7 +28,7 @@
     "taskcluster-client": "^3.3.0",
     "taskcluster-lib-docs": "^4.1.1",
     "taskcluster-lib-loader": "^2.0.0",
-    "taskcluster-lib-monitor": "^0.2.1",
+    "taskcluster-lib-monitor": "0.3.0",
     "tc-rules": "^5.0.0",
     "typed-env-config": "^2.0.0",
     "yargs": "^11.0.0"
