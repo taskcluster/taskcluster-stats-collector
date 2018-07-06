@@ -8,5 +8,5 @@ eb.declare({
   name: 'eb-test',
   description: 'EB Test',
   nines: 99,
-  days: 2
+  days: 2,
 });
