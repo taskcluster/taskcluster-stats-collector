@@ -16,7 +16,6 @@
   "dependencies": {
     "assert": "^1.4.1",
     "debug": "^3.1.0",
-    "events": "^2.0.0",
     "fs": "0.0.1-security",
     "lodash": "^3.10.1",
     "path": "^0.12.7",
