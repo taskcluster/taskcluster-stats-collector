@@ -1,21 +1,23 @@
+const debug = require('debug')('test:test');
+const assert = require('assert');
+const TaskListener = require('../src/listener.js');
+const slugid = require('slugid');
+const taskcluster = require('taskcluster-client');
+const monitoring = require('taskcluster-lib-monitor');
+const libUrls = require('taskcluster-lib-urls');
+const config = require('typed-env-config');
+
 suite('TaskListener', function() {
   test('listens', async function() {
-    var debug = require('debug')('test:test');
-    var assert = require('assert');
-    var TaskListener = require('../src/listener.js');
-    var slugid = require('slugid');
-    var taskcluster = require('taskcluster-client');
-    var monitoring = require('taskcluster-lib-monitor');
-    let config = require('typed-env-config');
 
-    let cfg = config({profile: 'test'});
+    const cfg = config({profile: 'test'});
 
     // Skip this test if no pulse credentials configured 
     if (!cfg.pulse.username) { // and the password can be empty
       this.skip();
     }
 
-    var taskdefn = {
+    const taskdefn = {
       provisionerId: 'stats-provisioner',
       workerType: 'stats-dummy',
       payload: {},
@@ -32,13 +34,15 @@ suite('TaskListener', function() {
     assert(cfg.taskcluster.credentials.clientId && cfg.taskcluster.credentials.accessToken,
       'taskcluster credentials required');
 
-    let monitor = await monitoring({
-      project: 'tc-stats-collector',
+    const monitor = await monitoring({
+      projectName: 'tc-stats-collector',
+      rootUrl: libUrls.testRootUrl(),
       credentials: {clientId: 'fake', accessToken: 'alsofake'},
       mock: true,
     });
 
-    let listener = new TaskListener({
+    const listener = new TaskListener({
+      rootUrl: libUrls.testRootUrl(),
       credentials: cfg.pulse,
       queueName: undefined,
       routingKey: {
@@ -47,16 +51,14 @@ suite('TaskListener', function() {
       monitor,
     });
 
-    let task_messages = [];
+    const task_messages = [];
     listener.on('task-message', ({action}) => task_messages.push(action));
     await listener.start();
 
-    var id = slugid.v4();
-    var queue = new taskcluster.Queue({
-      credentials: cfg.taskcluster.credentials,
-    });
+    const id = slugid.v4();
+    const queue = new taskcluster.Queue(cfg.taskcluster);
 
-    let result = await queue.createTask(id, taskdefn);
+    const result = await queue.createTask(id, taskdefn);
     assert(result);
     debug('task created');
 

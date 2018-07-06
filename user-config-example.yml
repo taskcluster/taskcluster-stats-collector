@@ -4,7 +4,5 @@ defaults:
   pulse:
     username: '...'
     password: '...'
-  taskcluster:
-    credentials:
-      clientId: '...'
-      accessToken: '...'
+    hostname: '...'
+    vhost: /

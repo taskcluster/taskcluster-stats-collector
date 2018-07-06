@@ -1,10 +1,16 @@
 defaults:
+  monitoring:
+    project: !env MONITORING_PROJECT
+    enable: !env:bool MONITORING_ENABLE
   signalfx:
     apiToken: !env SIGNALFX_API_TOKEN
   pulse:
     username: !env PULSE_USERNAME
     password: !env PULSE_PASSWORD
+    hostname: !env PULSE_HOSTNAME
+    vhost: !env PULSE_VHOST
   taskcluster:
+    rootUrl: !env TASKCLUSTER_ROOT_URL
     credentials:
       clientId:     !env TASKCLUSTER_CLIENT_ID
       accessToken:  !env TASKCLUSTER_ACCESS_TOKEN

@@ -1,0 +1,37 @@
+version: 0
+allowPullRequests: public
+tasks:
+  - provisionerId: '{{ taskcluster.docker.provisionerId }}'
+    workerType: '{{ taskcluster.docker.workerType }}'
+    extra:
+      github:
+        events:
+          - pull_request.opened
+          - pull_request.reopened
+          - pull_request.synchronize
+          - push
+          - release
+    scopes:
+        - secrets:get:project/taskcluster/testing/taskcluster-stats-collector
+    payload:
+      env:
+        NO_TEST_SKIP: true
+      features:
+        taskclusterProxy: true
+      maxRunTime: 3600
+      image: node:8
+      command:
+        - /bin/bash
+        - '--login'
+        - '-c'
+        - >-
+          git clone {{event.head.repo.url}} repo && cd repo && git config
+          advice.detachedHead false && git checkout {{event.head.sha}} &&
+          yarn &&
+          yarn test
+    metadata:
+      name: taskcluster-stats-collector tests
+      description: Run tests for taskcluster-stats-collector in Taskcluster
+      owner: '{{ event.head.user.email }}'
+      source: '{{ event.head.repo.url }}'
+

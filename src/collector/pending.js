@@ -43,7 +43,7 @@ collectorManager.collector({
 
   // calculate all workerTypes of interest
   let allWorkerTypes = NONPROVISIONED_WORKERTYPES.slice();
-  const prov = new taskcluster.AwsProvisioner();
+  const prov = new taskcluster.AwsProvisioner({rootUrl: 'https://taskcluster.net'});
   (await prov.listWorkerTypes()).forEach(wt => {
     allWorkerTypes.push(`aws-provisioner-v1.${wt}`);
   });

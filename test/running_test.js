@@ -1,9 +1,10 @@
+const assume = require('assume');
+const helper = require('./helper');
+
 suite('collector.running', () => {
-  let assume = require('assume');
-  let helper = require('./helper');
   let fakes;
 
-  let fakeTaskChange = ({state, runs}) => {
+  const fakeTaskChange = ({state, runs}) => {
     fakes.listener.emit('task-message', {
       action: `task-${state}`,
       payload: {
@@ -15,12 +16,12 @@ suite('collector.running', () => {
     });
   };
 
-  let assertMeasures = (expected) => {
+  const assertMeasures = (expected) => {
     assume(fakes.monitor.measures).to.deeply.equal(expected);
     fakes.monitor.measures = {};
   };
 
-  let assertCounts = (expected) => {
+  const assertCounts = (expected) => {
     assume(fakes.monitor.counts).to.deeply.equal(expected);
     fakes.monitor.counts = {};
   };

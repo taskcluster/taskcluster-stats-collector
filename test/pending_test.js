@@ -1,9 +1,10 @@
+const assume = require('assume');
+const helper = require('./helper');
+
 suite('collector.pending', () => {
-  let assume = require('assume');
-  let helper = require('./helper');
   let fakes;
 
-  let fakeTaskChange = ({state, scheduled, started, taskId}) => {
+  const fakeTaskChange = ({state, scheduled, started, taskId}) => {
     fakes.listener.emit('task-message', {
       action: `task-${state}`,
       payload: {
@@ -23,7 +24,7 @@ suite('collector.pending', () => {
     });
   };
 
-  let assertMeasures = (expected) => {
+  const assertMeasures = (expected) => {
     assume(fakes.monitor.measures).to.deeply.equal(expected);
     fakes.monitor.measures = {};
   };
@@ -68,7 +69,7 @@ suite('collector.pending', () => {
   });
 
   test('after a pending/running pair, pending tasks are measured periodically', async () => {
-    let scheduled = fakes.clock.msec();
+    const scheduled = fakes.clock.msec();
 
     fakeTaskChange({state: 'pending', taskId: 'primer', scheduled});
     fakeTaskChange({state: 'running', taskId: 'primer', scheduled});
@@ -86,12 +87,12 @@ suite('collector.pending', () => {
     fakeTaskChange({state: 'running', taskId: 'primer', scheduled: fakes.clock.msec()});
 
     fakes.queue.setStatus('t1', 'pending');
-    let scheduledT1 = fakes.clock.msec();
+    const scheduledT1 = fakes.clock.msec();
     fakeTaskChange({state: 'pending', taskId: 't1', scheduled: scheduledT1});
     await fakes.clock.tick(10000);
 
     fakes.queue.setStatus('t2', 'pending');
-    let scheduledT2 = fakes.clock.msec();
+    const scheduledT2 = fakes.clock.msec();
     fakeTaskChange({state: 'pending', taskId: 't2', scheduled: scheduledT2});
     await fakes.clock.tick(10000);
 
@@ -118,7 +119,7 @@ suite('collector.pending', () => {
     fakeTaskChange({state: 'running', taskId: 'primer', scheduled: fakes.clock.msec()});
 
     fakes.queue.setStatus('t1', 'pending');
-    let scheduledT1 = fakes.clock.msec();
+    const scheduledT1 = fakes.clock.msec();
     fakeTaskChange({state: 'pending', taskId: 't1', scheduled: scheduledT1});
     await fakes.clock.tick(60000);
     assertMeasures({

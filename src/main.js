@@ -1,12 +1,12 @@
-var TaskListener  = require('./listener.js');
-var monitoring = require('taskcluster-lib-monitor');
-let loader = require('taskcluster-lib-loader');
-let docs = require('taskcluster-lib-docs');
-let config = require('typed-env-config');
-let collectorManager = require('./collectormanager');
-let taskcluster = require('taskcluster-client');
-let signalfx = require('signalfx');
-let debugModule = require('debug');
+const TaskListener  = require('./listener.js');
+const monitoring = require('taskcluster-lib-monitor');
+const loader = require('taskcluster-lib-loader');
+const docs = require('taskcluster-lib-docs');
+const config = require('typed-env-config');
+const collectorManager = require('./collectormanager');
+const taskcluster = require('taskcluster-client');
+const signalfx = require('signalfx');
+const debugModule = require('debug');
 const Clock = require('./clock');
 const SignalFxRest = require('./signalfx-rest');
 const yargs = require('yargs');
@@ -19,7 +19,7 @@ const argv = yargs
 
 collectorManager.setup(argv);
 
-let load = loader(Object.assign({
+const load = loader(Object.assign({
   cfg: {
     requires: ['profile'],
     setup: ({profile}) => config({profile}),
@@ -28,7 +28,9 @@ let load = loader(Object.assign({
   monitor: {
     requires: ['cfg'],
     setup: ({cfg}) => monitoring({
-      project: 'tc-stats-collector',
+      projectName: cfg.monitoring.project || 'tc-stats-collector',
+      enable: cfg.monitoring.enable,
+      rootUrl: cfg.taskcluster.rootUrl,
       credentials: cfg.taskcluster.credentials,
       mock: process.env.NODE_ENV !== 'production',
     }),

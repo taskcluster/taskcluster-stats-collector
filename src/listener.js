@@ -14,10 +14,12 @@ class TaskListener extends EventEmitter {
    *
    * The options argument requires the following options:
    *
+   * rootUrl: deployment rootUrl
    * credentials: Pulse username and password
    *
    */
   constructor(options) {
+    assert(options.rootUrl, 'Need rootUrl');
     assert(options.credentials.username, 'Need Pulse credentials!');
     assert(options.credentials.password, 'Need Pulse credentials!');
 
@@ -29,7 +31,7 @@ class TaskListener extends EventEmitter {
     this.listener = new taskcluster.PulseListener({
       connection: this.connection,
     });
-    var queueEvents = new taskcluster.QueueEvents();
+    var queueEvents = new taskcluster.QueueEvents({rootUrl: options.rootUrl});
     this.listener.bind(queueEvents.taskPending(routingKey));
     this.listener.bind(queueEvents.taskRunning(routingKey));
     this.listener.bind(queueEvents.taskCompleted(routingKey));
