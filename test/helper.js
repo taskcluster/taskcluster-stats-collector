@@ -4,6 +4,33 @@ const EventEmitter = require('events');
 const debugModule = require('debug');
 const assume = require('assume');
 const {Writable, Readable} = require('stream');
+const {fakeauth, stickyLoader, Secrets} = require('taskcluster-lib-testing');
+
+exports.load = stickyLoader(load);
+
+suiteSetup(async function() {
+  exports.load.inject('profile', 'test');
+  exports.load.inject('process', 'test');
+});
+
+// set up the testing secrets
+exports.secrets = new Secrets({
+  secretName: 'project/taskcluster/testing/taskcluster-stats-collector',
+  secrets: {
+    pulse: [
+      {env: 'PULSE_USERNAME', cfg: 'pulse.username'},
+      {env: 'PULSE_PASSWORD', cfg: 'pulse.password'},
+      {env: 'PULSE_HOSTNAME', cfg: 'pulse.hostname'},
+      {env: 'PULSE_VHOST', cfg: 'pulse.vhost'},
+    ],
+    taskcluster: [
+      {env: 'TASKCLUSTER_ROOT_URL', cfg: 'taskcluster.rootUrl', name: 'rootUrl'},
+      {env: 'TASKCLUSTER_CLIENT_ID', cfg: 'taskcluster.credentials.clientId', name: 'clientId'},
+      {env: 'TASKCLUSTER_ACCESS_TOKEN', cfg: 'taskcluster.credentials.accessToken', name: 'accessToken'},
+    ],
+  },
+  load: exports.load,
+});
 
 class FakeQueue {
   constructor() {
@@ -178,9 +205,9 @@ module.exports.makeCollector = async name => {
   return fakes;
 };
 
-module.exports.FakeQueue = FakeQueue;
-module.exports.FakeClock = FakeClock;
-module.exports.FakeSignalFxRest = FakeSignalFxRest;
-module.exports.FakeIngest = FakeIngest;
-module.exports.MetricStreamSource = MetricStreamSource;
-module.exports.MetricStreamSink = MetricStreamSink;
+exports.FakeQueue = FakeQueue;
+exports.FakeClock = FakeClock;
+exports.FakeSignalFxRest = FakeSignalFxRest;
+exports.FakeIngest = FakeIngest;
+exports.MetricStreamSource = MetricStreamSource;
+exports.MetricStreamSink = MetricStreamSink;
