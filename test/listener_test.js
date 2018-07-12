@@ -12,7 +12,9 @@ helper.secrets.mockSuite('TaskListener', ['pulse', 'taskcluster'], function(mock
     if (skipping()) {
       return;
     }
-    helper.load.cfg('taskcluster.rootUrl', libUrls.testRootUrl());
+    if (mock) {
+      helper.load.cfg('taskcluster.rootUrl', libUrls.testRootUrl());
+    }
   });
 
   test('listens', async function() {

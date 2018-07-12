@@ -28,6 +28,9 @@ exports.secrets = new Secrets({
       {env: 'TASKCLUSTER_CLIENT_ID', cfg: 'taskcluster.credentials.clientId', name: 'clientId'},
       {env: 'TASKCLUSTER_ACCESS_TOKEN', cfg: 'taskcluster.credentials.accessToken', name: 'accessToken'},
     ],
+    signalfx: [
+      {env: 'SIGNALFX_API_TOKEN', cfg: 'signalfx.apiToken'},
+    ],
   },
   load: exports.load,
 });
