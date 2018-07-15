@@ -39,6 +39,7 @@ const load = loader(Object.assign({
   listener: {
     requires: ['cfg', 'monitor'],
     setup: async ({cfg, monitor}) => new TaskListener({
+      rootUrl: cfg.taskcluster.rootUrl,
       credentials: cfg.pulse,
       routingKey: {}, // different in tests
     }),
