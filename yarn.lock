@@ -3479,9 +3479,9 @@ taskcluster-lib-monitor@10.0.0:
     statsum "^0.6.0"
     taskcluster-client "^10.0.0"
 
-taskcluster-lib-testing@^12.0.0:
-  version "12.0.0"
-  resolved "https://registry.yarnpkg.com/taskcluster-lib-testing/-/taskcluster-lib-testing-12.0.0.tgz#70ca0fdc85b9fbff5ccef7d710c02cca312ed63a"
+taskcluster-lib-testing@^12.1.0:
+  version "12.1.0"
+  resolved "https://registry.yarnpkg.com/taskcluster-lib-testing/-/taskcluster-lib-testing-12.1.0.tgz#27fb0ca2734c54e425dc48d99b43fd0d4068e70a"
   dependencies:
     aws-sdk "^2.144.0"
     azure-table-node "1.5.0"

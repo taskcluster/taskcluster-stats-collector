@@ -15,7 +15,10 @@ suiteSetup(async function() {
 
 // set up the testing secrets
 exports.secrets = new Secrets({
-  secretName: 'project/taskcluster/testing/taskcluster-stats-collector',
+  secretName: [
+    'project/taskcluster/testing/taskcluster-stats-collector/master',
+    'project/taskcluster/testing/taskcluster-stats-collector',
+  ],
   secrets: {
     pulse: [
       {env: 'PULSE_USERNAME', cfg: 'pulse.username'},
@@ -29,6 +32,7 @@ exports.secrets = new Secrets({
       {env: 'TASKCLUSTER_ACCESS_TOKEN', cfg: 'taskcluster.credentials.accessToken', name: 'accessToken'},
     ],
     signalfx: [
+      // note that this is only available for pushes to master
       {env: 'SIGNALFX_API_TOKEN', cfg: 'signalfx.apiToken'},
     ],
   },

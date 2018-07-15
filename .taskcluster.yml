@@ -9,6 +9,7 @@ tasks:
           - push
           - release
     scopes:
+        - secrets:get:project/taskcluster/testing/taskcluster-stats-collector/master
         - secrets:get:project/taskcluster/testing/taskcluster-stats-collector
     payload:
       env:
@@ -40,11 +41,15 @@ tasks:
           - pull_request.opened
           - pull_request.reopened
           - pull_request.synchronize
+    scopes:
+        - secrets:get:project/taskcluster/testing/taskcluster-stats-collector
     payload:
       features:
         taskclusterProxy: true
       maxRunTime: 3600
       image: node:8
+      # NO_TEST_SKIP is not set for PRs, because PRs do not have access to the master-ronly
+      # secrets (SIGNALFX_API_KEY)
       command:
         - /bin/bash
         - '--login'
@@ -53,7 +58,6 @@ tasks:
           git clone {{event.head.repo.url}} repo && cd repo && git config
           advice.detachedHead false && git checkout {{event.head.sha}} &&
           yarn &&
-          unset TASK_ID &&
           yarn test
     metadata:
       name: taskcluster-stats-collector tests
