@@ -39,14 +39,14 @@ collectorManager.collector({
   name: 'pending',
   requires: ['monitor', 'listener', 'queue', 'clock'],
   // support emitting via statsum or directly as a time series
-}, async function () {
+}, async function() {
 
   // calculate all workerTypes of interest
   let allWorkerTypes = NONPROVISIONED_WORKERTYPES.slice();
-  const prov = new taskcluster.AwsProvisioner();
+  const prov = new taskcluster.AwsProvisioner({rootUrl: 'https://taskcluster.net'});
   (await prov.listWorkerTypes()).forEach(wt => {
     allWorkerTypes.push(`aws-provisioner-v1.${wt}`);
-  })
+  });
 
   // mappings from task key to pending time, keyed by workerType
   const pendingTasks = {};
@@ -163,7 +163,7 @@ collectorManager.collector({
       update(workerType, taskKey, isPending, scheduled, started);
     } catch (err) {
       this.debug('Failed to process message %s with error: %s, as JSON: %j',
-            action, err, err, err.stack);
+        action, err, err, err.stack);
     }
   });
 

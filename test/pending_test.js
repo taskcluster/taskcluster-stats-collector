@@ -1,9 +1,10 @@
+const assume = require('assume');
+const helper = require('./helper');
+
 suite('collector.pending', () => {
-  let assume = require('assume');
-  let helper = require('./helper');
   let fakes;
 
-  let fakeTaskChange = ({state, scheduled, started, taskId}) => {
+  const fakeTaskChange = ({state, scheduled, started, taskId}) => {
     fakes.listener.emit('task-message', {
       action: `task-${state}`,
       payload: {
@@ -23,7 +24,7 @@ suite('collector.pending', () => {
     });
   };
 
-  let assertMeasures = (expected) => {
+  const assertMeasures = (expected) => {
     assume(fakes.monitor.measures).to.deeply.equal(expected);
     fakes.monitor.measures = {};
   };
@@ -53,7 +54,7 @@ suite('collector.pending', () => {
     await fakes.clock.tick(1000);
     assertMeasures({
       // note that t4 is not represented here
-      'tasks.prov.wt.pending': [7000, 8000],
+      'tc-stats-collector.tasks.prov.wt.pending': [7000, 8000],
     });
   });
 
@@ -68,7 +69,7 @@ suite('collector.pending', () => {
   });
 
   test('after a pending/running pair, pending tasks are measured periodically', async () => {
-    let scheduled = fakes.clock.msec();
+    const scheduled = fakes.clock.msec();
 
     fakeTaskChange({state: 'pending', taskId: 'primer', scheduled});
     fakeTaskChange({state: 'running', taskId: 'primer', scheduled});
@@ -77,7 +78,7 @@ suite('collector.pending', () => {
     fakeTaskChange({state: 'pending', taskId: 't1', scheduled});
     await fakes.clock.tick(80000);
     assertMeasures({
-      'tasks.prov.wt.pending': [60000],
+      'tc-stats-collector.tasks.prov.wt.pending': [60000],
     }); // measured at the flush interval
   });
 
@@ -86,12 +87,12 @@ suite('collector.pending', () => {
     fakeTaskChange({state: 'running', taskId: 'primer', scheduled: fakes.clock.msec()});
 
     fakes.queue.setStatus('t1', 'pending');
-    let scheduledT1 = fakes.clock.msec();
+    const scheduledT1 = fakes.clock.msec();
     fakeTaskChange({state: 'pending', taskId: 't1', scheduled: scheduledT1});
     await fakes.clock.tick(10000);
 
     fakes.queue.setStatus('t2', 'pending');
-    let scheduledT2 = fakes.clock.msec();
+    const scheduledT2 = fakes.clock.msec();
     fakeTaskChange({state: 'pending', taskId: 't2', scheduled: scheduledT2});
     await fakes.clock.tick(10000);
 
@@ -101,7 +102,7 @@ suite('collector.pending', () => {
 
     await fakes.clock.tick(30000);
     assertMeasures({
-      'tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT1],
+      'tc-stats-collector.tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT1],
     });
 
     fakeTaskChange({state: 'running', taskId: 't1'});
@@ -109,7 +110,7 @@ suite('collector.pending', () => {
 
     await fakes.clock.tick(60000);
     assertMeasures({
-      'tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT2],
+      'tc-stats-collector.tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT2],
     });
   });
 
@@ -118,11 +119,11 @@ suite('collector.pending', () => {
     fakeTaskChange({state: 'running', taskId: 'primer', scheduled: fakes.clock.msec()});
 
     fakes.queue.setStatus('t1', 'pending');
-    let scheduledT1 = fakes.clock.msec();
+    const scheduledT1 = fakes.clock.msec();
     fakeTaskChange({state: 'pending', taskId: 't1', scheduled: scheduledT1});
     await fakes.clock.tick(60000);
     assertMeasures({
-      'tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT1],
+      'tc-stats-collector.tasks.prov.wt.pending': [fakes.clock.msec() - scheduledT1],
     });
 
     fakes.queue.setStatus('t2', 'pending');
@@ -138,7 +139,7 @@ suite('collector.pending', () => {
 
     await fakes.clock.tick(60000);
     assertMeasures({
-      'tasks.prov.wt.pending': [0],
+      'tc-stats-collector.tasks.prov.wt.pending': [0],
     });
   });
 });

@@ -1,9 +1,9 @@
-const HOUR = 3600 * 1000;
-const DAY = 24 * HOUR;
+const assume = require('assume');
+const helper = require('./helper');
 
 suite('eb', function() {
-  const assume = require('assume');
-  const helper = require('./helper');
+  const HOUR = 3600 * 1000;
+  const DAY = 24 * HOUR;
   let fakes, collector, basetime;
 
   const dh = (day, hour) => basetime + day * DAY + hour * HOUR;

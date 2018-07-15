@@ -274,7 +274,7 @@ module.exports.multiplexMetricStreams = ({name, streams, clock}) => {
   const update = clock.throttle(() => {
     // no updates at all until everything is warm
     if (!warm) {
-      if (_.all(inputs, i => i.streamLive)) {
+      if (inputs.every(i => i.streamLive)) {
         debug('warmed up: all input streams are now live');
         warm = true;
       } else {
@@ -295,7 +295,7 @@ module.exports.multiplexMetricStreams = ({name, streams, clock}) => {
 
       // calculate the next vtime, and bail out if we're not ready yet, planning
       // to return when the time is right
-      const nextTs = _.min(inputs.map(i => i.datapoints[0] && i.datapoints[0].ts));
+      const nextTs = _.min(inputs.filter(i => i.datapoints[0]).map(i => i.datapoints[0].ts)) || Infinity;
       if (nextTs > now - delay) {
         if (nextTs !== Infinity) {
           clock.setTimeout(`update ${name || 'unnamed mux'}`, update, nextTs - (now - delay));
@@ -319,7 +319,7 @@ module.exports.multiplexMetricStreams = ({name, streams, clock}) => {
       });
 
       if (!outputLive) {
-        outputLive = _.all(inputs.map(i => i.live));
+        outputLive = inputs.every(i => i.live);
         if (outputLive) {
           output.emit('data', {nowLive: true});
         }

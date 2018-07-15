@@ -5,7 +5,7 @@ collectorManager.collector({
   name: 'running',
   requires: ['monitor', 'listener'],
   // support emitting via statsum or directly as a time series
-}, function () {
+}, function() {
   this.listener.on('task-message', ({action, payload}) => {
     try {
       if (action === 'task-pending' || action === 'task-running') {
@@ -30,7 +30,7 @@ collectorManager.collector({
       });
     } catch (err) {
       this.debug('Failed to process message %s with error: %s, as JSON: %j',
-            action, err, err, err.stack);
+        action, err, err, err.stack);
     }
   });
 });

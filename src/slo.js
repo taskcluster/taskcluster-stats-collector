@@ -70,7 +70,7 @@ exports.declare = ({name, description, requires, indicators, testOnly}) => {
     // transform it with the aggregate function
     const aggregateStream = aggregateMetricStream({
       aggregate: values => {
-        if (_.all(values.map((value, i) => indicators[i].met(value)))) {
+        if (_.every(values.map((value, i) => indicators[i].met(value)))) {
           // all objectives met -> SLO = 1
           return 1;
         }

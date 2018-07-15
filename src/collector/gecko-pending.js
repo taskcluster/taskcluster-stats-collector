@@ -21,10 +21,10 @@ sli.declare({
   ].join('\n'),
   inputs: async () => {
     const workerTypes = filter(await getAwsWorkerTypes(), workerType =>
-        // old workerTypes are 'desktop-test*', but we still monitor those
-        workerType.startsWith('desktop-test') || (
+    // old workerTypes are 'desktop-test*', but we still monitor those
+      workerType.startsWith('desktop-test') ||
           // exclude *-alpha, *-beta as those are just for testing and may be delayed
-          workerType.startsWith('gecko-t-') && !/-(alpha|beta)$/.test(workerType)));
+          workerType.startsWith('gecko-t-') && !/-(alpha|beta)$/.test(workerType));
     return workerTypes.map(wt => {
       return {
         spec: 'statsum',
@@ -47,7 +47,7 @@ sli.declare({
   ].join('\n'),
   inputs: async () => {
     const workerTypes = filter(await getAwsWorkerTypes(),
-        workerType => /^gecko-[123]-b-/.test(workerType));
+      workerType => /^gecko-[123]-b-/.test(workerType));
     return workerTypes.map(wt => {
       return {
         spec: 'statsum',
@@ -71,7 +71,7 @@ sli.declare({
   ].join('\n'),
   inputs: async () => {
     const workerTypes = filter(await getAwsWorkerTypes(), workerType =>
-        workerType.startsWith('gecko-') && !/^gecko-(t|[123]-b)-/.test(workerType));
+      workerType.startsWith('gecko-') && !/^gecko-(t|[123]-b)-/.test(workerType));
     workerTypes.push('taskcluster-images'); // bug 1320328
     return workerTypes.map(wt => {
       return {
