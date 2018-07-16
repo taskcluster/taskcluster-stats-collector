@@ -63,7 +63,7 @@ ajv@^6.5.0:
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.1"
 
-amqplib@^0.5.1:
+amqplib@^0.5.1, amqplib@^0.5.2:
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/amqplib/-/amqplib-0.5.2.tgz#d2d7313c7ffaa4d10bcf1e6252de4591b6cc7b63"
   dependencies:
@@ -2641,6 +2641,13 @@ taskcluster-lib-monitor@10.0.0:
     raven "^2.2.1"
     statsum "^0.6.0"
     taskcluster-client "^10.0.0"
+
+taskcluster-lib-pulse@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/taskcluster-lib-pulse/-/taskcluster-lib-pulse-1.1.0.tgz#c866b7730377e4a65a143873bb9b0b6f239920db"
+  dependencies:
+    amqplib "^0.5.2"
+    debug "^3.1.0"
 
 taskcluster-lib-testing@^12.1.0:
   version "12.1.0"

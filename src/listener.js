@@ -1,9 +1,10 @@
-var debug = require('debug')('TaskListener');
-var _ = require('lodash');
-var assert = require('assert');
-var taskcluster = require('taskcluster-client');
-var EventEmitter = require('events');
-let collectorManager = require('./collectormanager');
+const debug = require('debug')('TaskListener');
+const _ = require('lodash');
+const assert = require('assert');
+const taskcluster = require('taskcluster-client');
+const {consume} = require('taskcluster-lib-pulse');
+const EventEmitter = require('events');
+const collectorManager = require('./collectormanager');
 
 class TaskListener extends EventEmitter {
   /**
@@ -15,27 +16,21 @@ class TaskListener extends EventEmitter {
    * The options argument requires the following options:
    *
    * rootUrl: deployment rootUrl
-   * credentials: Pulse credentials (handed to PulseConnection)
+   * client: a tc-lib-pulse Client
    *
    */
   constructor(options) {
     assert(options.rootUrl, 'Need rootUrl');
-    assert(options.credentials, 'Need credentials');
+    assert(options.client, 'Need client');
     super();
 
-    let routingKey = options.routingKey || {};
+    this.rootUrl = options.rootUrl;
+    this.client = options.client;
 
-    this.connection = new taskcluster.PulseConnection(options.credentials);
-    this.listener = new taskcluster.PulseListener({
-      connection: this.connection,
-    });
-    var queueEvents = new taskcluster.QueueEvents({rootUrl: options.rootUrl});
-    this.listener.bind(queueEvents.taskPending(routingKey));
-    this.listener.bind(queueEvents.taskRunning(routingKey));
-    this.listener.bind(queueEvents.taskCompleted(routingKey));
-    this.listener.bind(queueEvents.taskFailed(routingKey));
-    this.listener.bind(queueEvents.taskException(routingKey));
-    this.listener.on('message', message => this.onMessage(message));
+    // (tests set these)
+    this.routingKey = {};
+    this.queueName = 'tasks';
+    this.queueOptions = {};
 
     collectorManager.on('started', () => {
       return this.start().catch((err) => {
@@ -48,22 +43,34 @@ class TaskListener extends EventEmitter {
 
   async start() {
     debug('starting');
-    await this.listener.resume();
+    const queueEvents = new taskcluster.QueueEvents({rootUrl: this.rootUrl});
+    this.consumer = await consume({
+      client: this.client,
+      bindings: [
+        queueEvents.taskPending(this.routingKey),
+        queueEvents.taskRunning(this.routingKey),
+        queueEvents.taskCompleted(this.routingKey),
+        queueEvents.taskFailed(this.routingKey),
+        queueEvents.taskException(this.routingKey),
+      ],
+      queueName: this.queueName,
+      prefetch: 5,
+      ...this.queueOptions,
+    }, message => {
+      const {payload, exchange} = message;
+      const action = exchange.split('/').pop();
+      const taskId = payload.status.taskId;
+
+      this.emit('task-message', {action, payload, taskId});
+    });
   }
 
   async close() {
-    debug('hutting down');
-    await this.listener.close();
-    await this.connection.close();
-  }
-
-  onMessage(message) {
-    let that = this;
-    let {payload, exchange} = message;
-    let action = exchange.split('/').pop();
-    let taskId = payload.status.taskId;
-
-    this.emit('task-message', {action, payload, taskId});
+    debug('shutting down');
+    if (this.consumer) {
+      await this.consumer.stop();
+      delete this.consumer;
+    }
   }
 }
 

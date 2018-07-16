@@ -3,23 +3,38 @@ const assert = require('assert');
 const TaskListener = require('../src/listener.js');
 const slugid = require('slugid');
 const taskcluster = require('taskcluster-client');
+const {FakeClient} = require('taskcluster-lib-pulse');
 const monitoring = require('taskcluster-lib-monitor');
 const libUrls = require('taskcluster-lib-urls');
 const helper = require('./helper');
 
 helper.secrets.mockSuite('TaskListener', ['pulse', 'taskcluster'], function(mock, skipping) {
-  setup('TaskListener', function() {
+  let client;
+  const queueName = slugid.nice();
+
+  suiteSetup('TaskListener', async function() {
     if (skipping()) {
       return;
     }
+
     if (mock) {
       helper.load.cfg('taskcluster.rootUrl', libUrls.testRootUrl());
+      helper.load.inject('pulseClient', new FakeClient());
+    } else {
+      client = await helper.load('pulseClient');
+    }
+  });
+
+  suiteTeardown('TaskListener', async function() {
+    if (!mock && client) {
+      await client.stop();
     }
   });
 
   test('listens', async function() {
     const cfg = await helper.load('cfg');
 
+    const taskId = slugid.v4();
     const taskdefn = {
       provisionerId: 'stats-provisioner',
       workerType: 'stats-dummy',
@@ -34,30 +49,24 @@ helper.secrets.mockSuite('TaskListener', ['pulse', 'taskcluster'], function(mock
       },
     };
 
-    const monitor = await monitoring({
-      projectName: 'tc-stats-collector',
-      rootUrl: cfg.taskcluster.rootUrl,
-      credentials: {clientId: 'fake', accessToken: 'alsofake'},
-      mock: true,
-    });
+    const listener = await helper.load('listener');
 
-    const pulseCredentials = mock ? {fake: true} : cfg.pulse;
-    const listener = new TaskListener({
-      rootUrl: cfg.taskcluster.rootUrl,
-      credentials: pulseCredentials,
-      queueName: undefined,
-      routingKey: {
-        provisionerId: 'stats-provisioner',
-      },
-      monitor,
-    });
+    // listen only for this task
+    listener.routingKey = {taskId, provisionerId: 'stats-provisioner'};
+    // ..on a unique queue to avoid interfering with other test runs
+    listener.queueName = queueName;
+    // ..and use an exclusive queue so it will be deleted when we disconnect
+    listener.queueOptions = {exclusive: true};
 
     const task_messages = [];
-    listener.on('task-message', ({action}) => task_messages.push(action));
+    listener.on('task-message', ({action}) => {
+      debug(`received message with action ${action}`);
+      task_messages.push(action);
+    });
     await listener.start();
+
     if (mock) {
       // in the mock case, generate some fake messages
-      const fakePulse = listener.listener;
       const actions = [
         'task-pending',
         'task-running',
@@ -66,8 +75,8 @@ helper.secrets.mockSuite('TaskListener', ['pulse', 'taskcluster'], function(mock
         'task-completed',
       ];
       for (let action of actions) {
-        fakePulse.fakeMessage({
-          payload: {status: {taskId: 'abc123'}},
+        await listener.consumer.fakeMessage({
+          payload: {status: {taskId}},
           exchange: 'exchanges/fake-queue/' + action,
           routingKey: 'task.abc123',
           routes: [],
@@ -75,29 +84,28 @@ helper.secrets.mockSuite('TaskListener', ['pulse', 'taskcluster'], function(mock
       }
     } else {
       // in a real case, create a task and take it through its paces
-      const id = slugid.v4();
       const queue = new taskcluster.Queue(cfg.taskcluster);
 
-      const result = await queue.createTask(id, taskdefn);
+      const result = await queue.createTask(taskId, taskdefn);
       assert(result);
       debug('task created');
 
-      await queue.claimTask(id, 0, {
+      await queue.claimTask(taskId, 0, {
         workerGroup:    'my-worker-group',
         workerId:       'my-worker',
       });
       debug('task claimed');
 
-      await queue.reportException(id, 0, {reason: 'worker-shutdown'});
+      await queue.reportException(taskId, 0, {reason: 'worker-shutdown'});
       debug('task exception');
 
-      await queue.claimTask(id, 1, {
+      await queue.claimTask(taskId, 1, {
         workerGroup:    'my-worker-group',
         workerId:       'my-worker',
       });
       debug('task claimed again');
 
-      await queue.reportCompleted(id, 1);
+      await queue.reportCompleted(taskId, 1);
       debug('task completed');
     }
 
