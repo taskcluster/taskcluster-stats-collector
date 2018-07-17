@@ -1,5 +1,6 @@
 const TaskListener  = require('./listener.js');
 const monitoring = require('taskcluster-lib-monitor');
+const pulse = require('taskcluster-lib-pulse');
 const loader = require('taskcluster-lib-loader');
 const docs = require('taskcluster-lib-docs');
 const config = require('typed-env-config');
@@ -36,11 +37,19 @@ const load = loader(Object.assign({
     }),
   },
 
-  listener: {
+  pulseClient: {
     requires: ['cfg', 'monitor'],
-    setup: async ({cfg, monitor}) => new TaskListener({
+    setup: ({cfg, monitor}) => new pulse.Client({
+      monitor,
+      ...cfg.pulse,
+    }),
+  },
+
+  listener: {
+    requires: ['cfg', 'pulseClient'],
+    setup: async ({cfg, pulseClient}) => new TaskListener({
       rootUrl: cfg.taskcluster.rootUrl,
-      credentials: cfg.pulse,
+      client: pulseClient,
       routingKey: {}, // different in tests
     }),
   },

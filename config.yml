@@ -14,3 +14,7 @@ defaults:
     credentials:
       clientId:     !env TASKCLUSTER_CLIENT_ID
       accessToken:  !env TASKCLUSTER_ACCESS_TOKEN
+test:
+  pulse:
+    # avoid hanging around too long in tests
+    retirementDelay: 100
