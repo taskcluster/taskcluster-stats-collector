@@ -8,6 +8,8 @@ tasks:
         events:
           - push
           - release
+        branches:
+          - master
     scopes:
         - secrets:get:project/taskcluster/testing/taskcluster-stats-collector/master
         - secrets:get:project/taskcluster/testing/taskcluster-stats-collector
