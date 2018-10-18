@@ -21,6 +21,7 @@ exports.secrets = new Secrets({
   ],
   secrets: {
     pulse: [
+      {env: 'PULSE_NAMESPACE', cfg: 'pulse.namespace'},
       {env: 'PULSE_USERNAME', cfg: 'pulse.username'},
       {env: 'PULSE_PASSWORD', cfg: 'pulse.password'},
       {env: 'PULSE_HOSTNAME', cfg: 'pulse.hostname'},
