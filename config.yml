@@ -5,6 +5,7 @@ defaults:
   signalfx:
     apiToken: !env SIGNALFX_API_TOKEN
   pulse:
+    namespace: !env PULSE_NAMESPACE
     username: !env PULSE_USERNAME
     password: !env PULSE_PASSWORD
     hostname: !env PULSE_HOSTNAME
@@ -14,6 +15,11 @@ defaults:
     credentials:
       clientId:     !env TASKCLUSTER_CLIENT_ID
       accessToken:  !env TASKCLUSTER_ACCESS_TOKEN
+
+production:
+  pulse:
+    namespace: taskcluster-stats-collector
+
 test:
   pulse:
     # avoid hanging around too long in tests

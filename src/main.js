@@ -41,7 +41,8 @@ const load = loader(Object.assign({
     requires: ['cfg', 'monitor'],
     setup: ({cfg, monitor}) => new pulse.Client({
       monitor,
-      ...cfg.pulse,
+      namespace: cfg.pulse.namespace,
+      credentials: pulse.pulseCredentials(cfg.pulse),
     }),
   },
 
@@ -60,8 +61,10 @@ const load = loader(Object.assign({
   },
 
   queue: {
-    requires: [],
-    setup: () => new taskcluster.Queue(),
+    requires: ['cfg'],
+    setup: ({cfg}) => new taskcluster.Queue({
+      rootUrl: cfg.taskcluster.rootUrl,
+    }),
   },
 
   ingest: {
